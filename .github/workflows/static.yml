@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Shift Planner Application</title>
+
+    <style>
+
+        body {
+
+            font-family: Arial, sans-serif;
+
+            margin: 20px;
+
+            background-color: #f4f4f4;
+
+            color: #333;
+
+        }
+
+        .container {
+
+            max-width: 900px;
+
+            margin: 0 auto;
+
+            background-color: #fff;
+
+            padding: 20px;
+
+            border-radius: 8px;
+
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+        }
+
+        h1 {
+
+            color: #0056b3;
+
+            text-align: center;
+
+            margin-bottom: 20px;
+
+        }
+
+        textarea {
+
+            width: 100%;
+
+            padding: 10px;
+
+            margin-bottom: 10px;
+
+            border: 1px solid #ddd;
+
+            border-radius: 4px;
+
+            box-sizing: border-box;
+
+            min-height: 150px;
+
+            font-family: monospace;
+
+        }
+
+        .input-section {
+
+            margin-bottom: 20px;
+
+            padding: 15px;
+
+            border: 1px solid #e0e0e0;
+
+            border-radius: 5px;
+
+            background-color: #f9f9f9;
+
+        }
+
+        .input-section label {font-weight: bold; display: block; margin-bottom: 10px;}
+
+        .radio-group {display: flex; align-items: center; gap: 5px;}
+
+        .radio-group label {font-weight: normal; margin-right: 15px; margin-bottom: 0; display: inline-block;}
+
+        .radio-group input[type="radio"] {margin-right: 5px;}
+
+        .dropdown-group select {width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; margin-top: 5px;}
+
+        .button-group {display: flex; gap: 10px; margin-bottom: 20px;}
+
+        button {flex: 1; padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; transition: background-color 0.2s ease;}
+
+        button:hover {background-color: #0056b3;}
+
+        #copyButton {background-color: #28a745;}
+
+        #copyButton:hover {background-color: #218838;}
+
+        #printButton {background-color: #6c757d;}
+
+        #printButton:hover {background-color: #5a6268;}
+
+        .message-box {background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 10px; border-radius: 4px; margin-top: 10px; text-align: center; display: none;}
+
+        .output-section {margin-top: 20px;}
+
+        .output-section h2 {margin-bottom: 10px; color: #0056b3;}
+
+        .output-table-container {overflow-x: auto; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px;}
+
+        .output-table {width: 100%; border-collapse: collapse; min-width: 600px;}
+
+        .output-table th, .output-table td {border: 1px solid #ddd; padding: 8px; text-align: left; white-space: nowrap;}
+
+        .output-table th {background-color: #f2f2f2; color: #555;}
+
+        .output-table tr:nth-child(even) {background-color: #f9f9f9;}
+
+        
+
+        #arrivalDepartureTable td { white-space: normal; word-break: break-word; vertical-align: top; }
+
+        .arrivals-text { color: green; font-weight: bold; }
+
+        .departures-text { color: red; font-weight: bold; }
+
+
+        #tempClipboard {position: absolute; left: -9999px;}
+
+        #debugOutput {display: none;} 
+
+
+        @media print {
+
+            body { margin: 0; background-color: #fff; color: #000; }
+
+            .container { box-shadow: none; border-radius: 0; padding: 0; max-width: 100%; }
+
+            .input-section, .button-group, .message-box, #debugOutput, #disclaimerPopup { display: none !important; }
+
+            h1 { text-align: left; margin-left: 20px; }
+
+            .output-section h2 { margin-left: 20px; }
+
+            .output-table-container { border: none; margin-left: 20px; margin-right: 20px; overflow-x: visible;}
+
+            .output-table { min-width: unset; width: auto; } 
+
+            .output-table th, .output-table td { white-space: normal; padding: 5px; } 
+
+            #arrivalDepartureTable { width: 100%; } 
+
+        }
+
+        .disclaimer-popup { position: fixed; top: 20px; right: 20px; width: 350px; max-width: 90%; background-color: #fff3e0; border: 1px solid #ffcc80; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1001; font-size: 0.85em; color: #5d4037; }
+
+        .disclaimer-header { background-color: #ffa726; color: white; padding: 8px 15px; border-top-left-radius: 7px; border-top-right-radius: 7px; display: flex; justify-content: space-between; align-items: center; }
+
+        .disclaimer-header span { font-weight: bold; }
+
+        .disclaimer-content { padding: 15px; line-height: 1.5; }
+
+        .disclaimer-content p { margin: 0 0 10px 0; }
+
+        .disclaimer-content p:last-child { margin-bottom: 0; }
+
+        .close-btn { background: none; border: none; color: white; font-size: 1.6em; font-weight: bold; cursor: pointer; padding: 0 5px; line-height: 1;}
+
+        .close-btn:hover { color: #fffde7; }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div id="disclaimerPopup" class="disclaimer-popup" style="display: none;">
+
+        <div class="disclaimer-header">
+
+            <span>Important Notice</span>
+
+            <button id="closeDisclaimerBtn" class="close-btn" aria-label="Close Disclaimer">&times;</button>
+
+        </div>
+
+        <div class="disclaimer-content">
+
+            <p>This shift planner provides a guideline based on scheduled availability and may not account for all individual employee skills or specific operational needs.</p>
+
+            <p>Plans generated by this application should be reviewed. This tool does not supersede primary scheduling directives provided by senior leadership.</p>
+
+            <p>Always use discretion when finalizing shift plans.</p>
+
+            <p>***Verify additional schedules for necessary break accomodation.***</p>
+
+        </div>
+
+    </div>
+
+
+    <div class="container">
+
+        <h1>Chick-fil-A Fountain City Shift Planner</h1>
+
+        <p>Paste your raw scheduling data below. The application will then help plan breaks and positions.</p>
+
+        <textarea id="rawDataInput" placeholder="Paste your scheduling data here..." oninput="handleRawDataInput()"></textarea>
+
+        
+
+        <div class="input-section">
+
+            <label id="shiftTypeLabel">Select Shift Type:</label>
+
+            <div class="radio-group" role="radiogroup" aria-labelledby="shiftTypeLabel">
+
+                <input type="radio" name="shiftType" value="day" id="shiftTypeDay" checked onchange="updateShiftTypeSpecificUI()">
+
+                <label for="shiftTypeDay">Day Shift</label>
+
+                <input type="radio" name="shiftType" value="night" id="shiftTypeNight" onchange="updateShiftTypeSpecificUI()">
+
+                <label for="shiftTypeNight">Night Shift</label>
+
+            </div>
+
+        </div>
+
+
+        <div class="input-section" id="schoolSessionSection" style="display: none;">
+
+            <label id="schoolSessionLabel">Is School in Session?</label>
+
+            <div class="radio-group" role="radiogroup" aria-labelledby="schoolSessionLabel">
+
+                <input type="radio" name="schoolSession" value="yes" id="schoolSessionYes" checked>
+
+                <label for="schoolSessionYes">Yes (Breaks restricted 7:30-9:00 AM)</label>
+
+                <input type="radio" name="schoolSession" value="no" id="schoolSessionNo">
+
+                <label for="schoolSessionNo">No (Breaks restricted 9:30-10:30 AM)</label>
+
+            </div>
+
+        </div>
+
+
+        <div class="input-section dropdown-group">
+
+            <label for="shiftLeaderSelect">Assign Shift Leader:</label>
+
+            <select id="shiftLeaderSelect"><option value="">-- Select Shift Leader (Optional) --</option></select>
+
+            <small style="display: block; margin-top: 5px; color: #666;">Click "Plan Shift" after selecting to update the lineup.</small>
+
+        </div>
+
+        <div class="input-section dropdown-group" id="checklistPersonSection" style="display: none;">
+
+            <label for="checklistPersonSelect">Assign Checklist Person (Night Shift Only):</label>
+
+            <select id="checklistPersonSelect"><option value="">-- Select Checklist Person (Optional) --</option></select>
+
+            <small style="display: block; margin-top: 5px; color: #666;">Click "Plan Shift" after selecting to update the lineup.</small>
+
+        </div>
+
+        <div class="button-group">
+
+            <button type="button" onclick="planShift()">Plan Shift</button>
+
+            <button type="button" id="copyButton" onclick="copyPlanToClipboard()">Copy Plan to Clipboard</button>
+
+            <button type="button" id="printButton" onclick="printPlan()">Print Plan (Save as PDF)</button>
+
+        </div>
+
+        <div id="messageBox" class="message-box" aria-live="polite"></div>
+
+        <div class="output-section" id="debugOutput">
+
+            <h2>Employees Available Per Peak (Debug):</h2><pre id="peakAvailabilityOutput"></pre>
+
+            <h2>Break Slot Counts (Debug):</h2><pre id="breakCountsOutput"></pre>
+
+        </div>
+
+        <div class="output-section" id="planOutput"></div>
+
+        <textarea id="tempClipboard"></textarea>
+
+    </div>
+
+
+    <script>
+
+        // --- UTILITY FUNCTIONS ---
+
+        function timeToMinutes(timeStr) { if (!timeStr) return -1; const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i); if (!match) { /* console.warn("timeToMinutes failed for:", timeStr); */ return -1; } let h = parseInt(match[1]); const m = parseInt(match[2]); const p = match[3].toLowerCase(); if (p === 'pm' && h !== 12) h += 12; else if (p === 'am' && h === 12) h = 0; return h * 60 + m; }
+
+        function minutesToTime(totalMinutes) { const h = Math.floor(totalMinutes / 60); const m = totalMinutes % 60; const period = h >= 12 && h < 24 ? 'PM' : 'AM'; let dH = h % 12; if (dH === 0) dH = 12; const dM = m < 10 ? '0' + m : m; return `${dH}:${dM} ${period}`; };
+
+        
+
+        // --- APPLICATION CONFIGURATION ---
+
+        const APP_CONFIG = {
+
+            PEAK_HOURS: {
+
+                day: [ 
+
+                    { name: 'Breakfast', start: timeToMinutes("7:30AM"), end: timeToMinutes("9:00AM"), colHeader: 'Breakfast' },
+
+                    // ** MODIFIED Lunch Peak Definition for Day Shift **
+
+                    { name: 'Lunch Core', start: timeToMinutes("12:00PM"), end: timeToMinutes("1:00PM"), colHeader: 'Lunch (12-1p)' }
+
+                ],
+
+                night: [ 
+
+                    { name: 'Dinner Core', start: timeToMinutes("6:00PM"), end: timeToMinutes("7:00PM"), colHeader: 'Dinner (6-7p)' }, 
+
+                    { name: '9-10pm', start: timeToMinutes("9:00PM"), end: timeToMinutes("10:00PM"), colHeader: '9-10pm' }
+
+                ]
+
+            },
+
+            DAY_SHIFT_MID_MORNING_PEAK_SCHOOL_OUT: { name: 'Mid-Morning Rush', start: timeToMinutes("9:30AM"), end: timeToMinutes("10:30AM"), colHeader: '9:30-10:30am' },
+
+            DAY_SHIFT_BREAKFAST_RESTRICTIONS: { schoolInSession: { start: timeToMinutes("7:30AM"), end: timeToMinutes("9:00AM") }, schoolNotInSession: { start: timeToMinutes("9:30AM"), end: timeToMinutes("10:30AM") } },
+
+            UNIVERSAL_BREAK_RESTRICTIONS: [ { start: timeToMinutes("11:30AM"), end: timeToMinutes("1:00PM") }, { start: timeToMinutes("1:00PM"), end: timeToMinutes("2:00PM") }, { start: timeToMinutes("5:30PM"), end: timeToMinutes("7:00PM") } ],
+
+            SHIFT_TIME_RANGES: { day: { start: 300, end: 840 }, night: { start: 840, end: 1380 } }, // 5AM-2PM, 2PM-11PM
+
+            LINEUP_POSITIONS_DETAILS: [ { id: 1, amBuildTo: "Headset 1", pmBuildTo: "Cash 1" }, { id: 2, amBuildTo: "Headset 2", pmBuildTo: "Cash 2" },{ id: 3, amBuildTo: "Window", pmBuildTo: "DT Stager/Door" }, { id: 4, amBuildTo: "DT Bagger", pmBuildTo: "DT Bagger" },{ id: 5, amBuildTo: "DT Drinks", pmBuildTo: "DT Drinks" }, { id: 6, amBuildTo: "Register 1", pmBuildTo: "Register 1" },{ id: 7, amBuildTo: "FC Bagger", pmBuildTo: "FC Expo" }, { id: 8, amBuildTo: "FC Expo", pmBuildTo: "FC Bagger" },{ id: 9, amBuildTo: "DT Stuffer", pmBuildTo: "DT Stuffer/hurricane" }, { id: 10, amBuildTo: "FC Drinks/Desserts", pmBuildTo: "Headset 3" },{ id: 11, amBuildTo: "Headset 3", pmBuildTo: "FC Drinks/Register 2" }, { id: 12, amBuildTo: "Shift Lead/Stocker", pmBuildTo: "Desserts" },{ id: 13, amBuildTo: "Register 2", pmBuildTo: "Register 2" }, { id: 14, amBuildTo: "OS Cash", pmBuildTo: "Headset 4" },{ id: 15, amBuildTo: "Desserts", pmBuildTo: "Shift Lead" }, { id: 16, amBuildTo: "Dining Room", pmBuildTo: "OS Expo" },{ id: 17, amBuildTo: "Middle Bagger 1", pmBuildTo: "Hospitality" }, { id: 18, amBuildTo: "Headset 4", pmBuildTo: "Middle Bagger" },{ id: 19, amBuildTo: "OS Expo", pmBuildTo: "FC Stuffer" }, { id: 20, amBuildTo: "FC Expo 2", pmBuildTo: "Headset 5" },{ id: 21, amBuildTo: "Middle Bagger 2", pmBuildTo: "Middle Bagger 2" }, { id: 22, amBuildTo: "Register 3", pmBuildTo: "Register 3" },{ id: 23, amBuildTo: "FC Stager", pmBuildTo: "FC Stuffer" }, { id: 24, amBuildTo: "Drinks 3", pmBuildTo: "Drinks 3" },{ id: 25, amBuildTo: "Headset 5", pmBuildTo: "Headset 5" }, { id: 26, amBuildTo: "Cash 2", pmBuildTo: "" },{ id: 27, amBuildTo: "OS Expo 2", pmBuildTo: "" }, { id: 28, amBuildTo: "FC Expo 3", pmBuildTo: "" },{ id: 29, amBuildTo: "2nd Mile", pmBuildTo: "" }, { id: 30, amBuildTo: "FC Drinks 2", pmBuildTo: "" } ],
+
+            BREAK_DURATION_MINS: 30, MIN_WORK_BEFORE_BREAK_MINS: 60, MAX_CONCURRENT_BREAKS: 2,
+
+            SHIFT_LEAD_LINEUP_IDS: { day: 12, night: 15 },
+
+            DAY_LEADER_START_TIMES_MINS: [timeToMinutes("5:00AM"), timeToMinutes("5:30AM")],
+
+            NIGHT_SHIFT_CRITICAL_END_TIME_MINS: timeToMinutes("10:30PM"),
+
+            STRINGS: { NO_BREAK_NEEDED: 'No break needed', BREAK_CONFLICT_MESSAGE: 'Break conflict: No clear slot found.', WARNING_CONCURRENT_BREAKS: 'WARNING: Break contributes to >2 concurrent.', MSG_SHIFT_LEADER_NOT_FOUND_PREFIX: 'Shift leader "', MSG_SHIFT_LEADER_NOT_FOUND_SUFFIX: '" not found in schedule. Check spelling or ensure they are scheduled.', MSG_SL_TIMES_UNPARSEABLE_PREFIX: 'Error: Could not parse schedule times for selected Shift Leader "', MSG_SL_TIMES_UNPARSEABLE_SUFFIX: '". Please check raw data format.', MSG_CHECKLIST_PERSON_NOT_FOUND_PREFIX: 'Checklist person "', MSG_CHECKLIST_PERSON_NOT_FOUND_SUFFIX: '" not found in schedule.', MSG_ASSIGNED_CHECKLIST_PERSON: 'Assigned as Checklist Person.', MSG_NO_PLAN_TO_COPY: 'No plan to copy. Please plan the shift first.', MSG_PLAN_COPIED: 'Plan copied to clipboard!', MSG_PLAN_COPIED_FALLBACK: 'Plan copied to clipboard! (using fallback)', MSG_FAILED_TO_COPY: 'Failed to copy plan. Please copy manually.', MSG_NO_PLAN_TO_PRINT: 'No plan to print. Please plan the shift first.', MSG_SHIFT_PLANNED_SUCCESS: 'Shift planned successfully!' }
+
+        };
+
+
+        // --- CORE FUNCTIONS ---
+
+        function isOverlappingRestrictedBreakTime(cSM, cEM, effectiveRestrictions) { for (const r of effectiveRestrictions) { if (cSM < r.end && cEM > r.start) return true; } return false; };
+
+        function getBuildToPositions(nA, sT) { const pS = []; const l = APP_CONFIG.LINEUP_POSITIONS_DETAILS.length; for (let i=0;i<l;i++) { const d=APP_CONFIG.LINEUP_POSITIONS_DETAILS[i]; let pN=sT==='day'?d.amBuildTo:d.pmBuildTo; if(pN)pS.push(pN); } return pS.filter(p=>p&&p.trim()!=="").slice(0,nA); };
+
+        function calculateBreak(tIM, tOM, gBC, effectiveRestrictions) { const sDH=(tOM-tIM)/60; if(sDH<6)return APP_CONFIG.STRINGS.NO_BREAK_NEEDED; let ePBS=tIM+APP_CONFIG.MIN_WORK_BEFORE_BREAK_MINS; let fS=false; let fB_S=-1,fB_E=-1; for(let cTS=ePBS;cTS+APP_CONFIG.BREAK_DURATION_MINS<=tOM;cTS+=15){ const cTE=cTS+APP_CONFIG.BREAK_DURATION_MINS; if(cTE>tOM)continue; if(isOverlappingRestrictedBreakTime(cTS,cTE, effectiveRestrictions))continue; let wEMB=false; for(let m=cTS;m<cTE;m+=15){if((gBC[m]!==undefined&&gBC[m]>=APP_CONFIG.MAX_CONCURRENT_BREAKS)){wEMB=true;break;}} if(wEMB)continue; fB_S=cTS;fB_E=cTE;fS=true;break;} if(fS){for(let m=fB_S;m<fB_E;m+=15)gBC[m]=(gBC[m]||0)+1;return `${minutesToTime(fB_S)} - ${minutesToTime(fB_E)}`;} else {return APP_CONFIG.STRINGS.BREAK_CONFLICT_MESSAGE;}};
+
+        function parseRawData(rD) { const ls=rD.split('\n').map(l=>l.trim()).filter(l=>l.length>0); const es=[]; let cN=''; for(const l of ls){ if(l.match(/^\(\d{3}\)\s*\d{3}-\d{4}$/)||l.includes('FOH General'))continue; else if(l.match(/^\d{1,2}:\d{2}(AM|PM)\s*-\s*\d{1,2}:\d{2}(AM|PM)$/)){ const [tIS,tOS]=l.split(' - ').map(s=>s.trim()); if(cN){ const e={name:cN,timeIn:tIS,timeOut:tOS,timeInMins:timeToMinutes(tIS),timeOutMins:timeToMinutes(tOS),breakTime:'',notes:''}; Object.values(APP_CONFIG.PEAK_HOURS).flat().forEach(p=>e[p.colHeader]='');es.push(e);}} else if(l.match(/^[A-Z][a-zA-Z\s.'-]*$/i))cN=l;} return es;};
+
+        function populateEmployeeDropdowns(emps) { const slS=document.getElementById('shiftLeaderSelect');const cpS=document.getElementById('checklistPersonSelect');const curSL=slS.value;const curCP=cpS.value;slS.innerHTML='<option value="">-- Select Shift Leader (Optional) --</option>';cpS.innerHTML='<option value="">-- Select Checklist Person (Optional) --</option>';if(!emps||emps.length===0)return; const shiftTypeRadio = document.querySelector('input[name="shiftType"]:checked'); if (!shiftTypeRadio) return; const selectedShiftType = shiftTypeRadio.value;let elE=[];if(selectedShiftType==='day'){elE=emps.filter(e=>e.timeInMins!==-1&&APP_CONFIG.DAY_LEADER_START_TIMES_MINS.includes(e.timeInMins));}else if(selectedShiftType==='night'){elE=emps.filter(e=>e.timeOutMins===APP_CONFIG.NIGHT_SHIFT_CRITICAL_END_TIME_MINS);}const unELN=[...new Set(elE.map(e=>e.name))].sort();unELN.forEach(n=>{slS.add(new Option(n,n));});if(unELN.includes(curSL))slS.value=curSL;if(selectedShiftType==='night'){const chkElE=emps.filter(e=>e.timeOutMins===APP_CONFIG.NIGHT_SHIFT_CRITICAL_END_TIME_MINS).map(e=>e.name);[...new Set(chkElE)].sort().forEach(n=>{cpS.add(new Option(n,n));});if([...new Set(chkElE)].includes(curCP))cpS.value=curCP;}};
+
+        
+
+        function updateShiftTypeSpecificUI() {
+
+            const selectedShiftTypeRadio = document.querySelector('input[name="shiftType"]:checked');
+
+            if (!selectedShiftTypeRadio) { /* console.error("Shift type radio not found..."); */ return; }
+
+            const selectedShiftType = selectedShiftTypeRadio.value;
+
+            const checklistSection = document.getElementById('checklistPersonSection');
+
+            const schoolSessionSection = document.getElementById('schoolSessionSection'); 
+
+            if (checklistSection) { checklistSection.style.display = selectedShiftType === 'night' ? 'block' : 'none'; if (selectedShiftType !== 'night') { const checklistSelect = document.getElementById('checklistPersonSelect'); if (checklistSelect) checklistSelect.value = ''; } }
+
+            if (schoolSessionSection) { schoolSessionSection.style.display = selectedShiftType === 'day' ? 'block' : 'none'; }
+
+            const rawData = document.getElementById('rawDataInput').value;
+
+            const employees = rawData.trim().length > 0 ? parseRawData(rawData) : [];
+
+            populateEmployeeDropdowns(employees);
+
+        };
+
+
+        function detectConcurrentBreaksAfterAssignment(emps, gBC) { emps.forEach(e=>{if(e.breakTime&&![APP_CONFIG.STRINGS.NO_BREAK_NEEDED,APP_CONFIG.STRINGS.BREAK_CONFLICT_MESSAGE].includes(e.breakTime)){const [bsS,beS]=e.breakTime.split(' - ');const bsM=timeToMinutes(bsS);const beM=timeToMinutes(beS);if(bsM===-1||beM===-1)return;for(let m=bsM;m<beM;m+=15){if(gBC[m]>APP_CONFIG.MAX_CONCURRENT_BREAKS){e.notes=(e.notes?e.notes+'; ':'')+APP_CONFIG.STRINGS.WARNING_CONCURRENT_BREAKS;break;}}}});};
+
+        function calculateScheduledCounts(employees, shiftType) { const shiftRange = APP_CONFIG.SHIFT_TIME_RANGES[shiftType]; const scheduledCounts = {}; for (let time = shiftRange.start; time < shiftRange.end; time += 30) { let count = 0; const intervalStart = time; const intervalEnd = time + 30; employees.forEach(emp => { if (emp.timeInMins === -1 || emp.timeOutMins === -1) return; if (emp.timeInMins < intervalEnd && emp.timeOutMins > intervalStart) count++; }); scheduledCounts[minutesToTime(time)] = count; } return scheduledCounts; }
+
+        function calculateBreaksInIntervalCounts(employees, shiftType) { const shiftRange = APP_CONFIG.SHIFT_TIME_RANGES[shiftType]; const breaksInIntervalCounts = {}; for (let time = shiftRange.start; time < shiftRange.end; time += 30) { let breakCount = 0; const intervalStart = time; const intervalEnd = time + 30; const intervalTimeStr = minutesToTime(time); employees.forEach(emp => { if (emp.breakTime && emp.breakTime !== APP_CONFIG.STRINGS.NO_BREAK_NEEDED && emp.breakTime !== APP_CONFIG.STRINGS.BREAK_CONFLICT_MESSAGE) { const parts = emp.breakTime.split(/\s*-\s*/); let breakStartStr = '', breakEndStr = ''; if (parts.length === 2) { breakStartStr = parts[0].trim(); breakEndStr = parts[1].trim(); } else { return; } const breakStartMins = timeToMinutes(breakStartStr); const breakEndMins = timeToMinutes(breakEndStr); if (breakStartMins !== -1 && breakEndMins !== -1) { const overlaps = (breakStartMins < intervalEnd && breakEndMins > intervalStart); if (overlaps) breakCount++; } } }); breaksInIntervalCounts[intervalTimeStr] = breakCount; } return breaksInIntervalCounts; }
+
+        function calculateArrivalDepartureLog(employees, shiftType) { const logEntries = []; const shiftRange = APP_CONFIG.SHIFT_TIME_RANGES[shiftType]; for (let currentTimeMins = shiftRange.start; currentTimeMins <= shiftRange.end; currentTimeMins += 15) { const arrivalsAtThisTime = employees.filter(emp => emp.timeInMins === currentTimeMins).map(emp => emp.name); const departuresAtThisTime = employees.filter(emp => emp.timeOutMins === currentTimeMins).map(emp => emp.name); if (arrivalsAtThisTime.length > 0 || departuresAtThisTime.length > 0) { logEntries.push({ time: minutesToTime(currentTimeMins), arrivals: arrivalsAtThisTime, departures: departuresAtThisTime }); } } return logEntries; }
+
+        
+
+        function renderPlan(lineupData, employees, shiftType, scheduledCounts, breaksInIntervalData, arrivalDepartureLog, dynamicLineupHeaders) {
+
+            const planOutputDiv = document.getElementById('planOutput'); planOutputDiv.innerHTML = '';   
+
+            const lineupTableContainer = document.createElement('div'); lineupTableContainer.className = 'output-table-container'; const lineupTable = document.createElement('table'); lineupTable.id = "lineupOutputTable"; lineupTable.className = 'output-table'; const lineupThead = lineupTable.createTHead(); const lineupHeaderRow = lineupThead.insertRow(); const finalTableHeaders = ['Lineup']; if (shiftType === 'day') { finalTableHeaders.push('AM Build-To'); } finalTableHeaders.push(...dynamicLineupHeaders); if (shiftType === 'night') { finalTableHeaders.push('PM Build-To'); } finalTableHeaders.forEach(headerText => { lineupHeaderRow.appendChild(document.createElement('th')).textContent = headerText; }); const lineupTbody = lineupTable.createTBody(); lineupData.forEach(entry => { const hasAssignedStaff = dynamicLineupHeaders.some(header => entry[header] && entry[header].trim() !== ''); if ((shiftType === 'day' && entry.amBuildTo) || (shiftType === 'night' && entry.pmBuildTo) || hasAssignedStaff) { const row = lineupTbody.insertRow(); row.insertCell().textContent = entry.id; if (shiftType === 'day') { row.insertCell().textContent = entry.amBuildTo; } dynamicLineupHeaders.forEach(header => { row.insertCell().textContent = entry[header] || ''; }); if (shiftType === 'night') { row.insertCell().textContent = entry.pmBuildTo; } } }); planOutputDiv.appendChild(document.createElement('h2')).textContent='Lineup'; planOutputDiv.appendChild(lineupTableContainer).appendChild(lineupTable); planOutputDiv.appendChild(document.createElement('br')); planOutputDiv.appendChild(document.createElement('br'));
+
+            const rosterTableContainer=document.createElement('div');rosterTableContainer.className='output-table-container'; const rosterTable=document.createElement('table');rosterTable.id="rosterOutputTable";rosterTable.className='output-table'; const rosterThead=rosterTable.createTHead();const rosterHeaderRow=rosterThead.insertRow(); ['Team Member','Time IN','Time OUT','Break','Notes'].forEach(hT=>{rosterHeaderRow.appendChild(document.createElement('th')).textContent=hT;}); const rosterTbody=rosterTable.createTBody(); employees.forEach(e=>{const r=rosterTbody.insertRow();r.insertCell().textContent=e.name;r.insertCell().textContent=e.timeIn;r.insertCell().textContent=e.timeOut;r.insertCell().textContent=e.breakTime;r.insertCell().textContent=e.notes;}); planOutputDiv.appendChild(document.createElement('h2')).textContent='Roster';planOutputDiv.appendChild(rosterTableContainer).appendChild(rosterTable); planOutputDiv.appendChild(document.createElement('br'));planOutputDiv.appendChild(document.createElement('br'));
+
+            const staffingTableContainer = document.createElement('div'); staffingTableContainer.className = 'output-table-container'; const staffingTable = document.createElement('table'); staffingTable.id = "staffingOutputTable"; staffingTable.className = 'output-table'; const staffingThead = staffingTable.createTHead(); const staffingHeaderRow = staffingThead.insertRow(); staffingHeaderRow.appendChild(document.createElement('th')).textContent = 'Time'; staffingHeaderRow.appendChild(document.createElement('th')).textContent = 'Total Scheduled'; staffingHeaderRow.appendChild(document.createElement('th')).textContent = 'Predicted Breaks During Interval'; const staffingTbody = staffingTable.createTBody(); if (scheduledCounts && Object.keys(scheduledCounts).length > 0) { for (const time in scheduledCounts) { if (scheduledCounts.hasOwnProperty(time)) { const row = staffingTbody.insertRow(); row.insertCell().textContent = time; row.insertCell().textContent = scheduledCounts[time]; row.insertCell().textContent = breaksInIntervalData[time] !== undefined ? breaksInIntervalData[time] : 0; } } } else { const row = staffingTbody.insertRow(); const cell = row.insertCell(); cell.colSpan = 3; cell.textContent = "No staffing data to display for this shift range."; cell.style.textAlign = "center"; } planOutputDiv.appendChild(document.createElement('h2')).textContent = `Staffing Levels Per Half Hour (${shiftType.charAt(0).toUpperCase() + shiftType.slice(1)} Shift)`; planOutputDiv.appendChild(staffingTableContainer).appendChild(staffingTable);
+
+            planOutputDiv.appendChild(document.createElement('br')); planOutputDiv.appendChild(document.createElement('br'));
+
+            const adTableContainer = document.createElement('div'); adTableContainer.className = 'output-table-container'; const adTable = document.createElement('table'); adTable.id = "arrivalDepartureTable"; adTable.className = 'output-table'; const adThead = adTable.createTHead(); const adHeaderRow = adThead.insertRow(); adHeaderRow.appendChild(document.createElement('th')).textContent = 'Time'; adHeaderRow.appendChild(document.createElement('th')).textContent = 'Arrivals (+)'; adHeaderRow.appendChild(document.createElement('th')).textContent = 'Departures (-)'; const adTbody = adTable.createTBody(); if (arrivalDepartureLog && arrivalDepartureLog.length > 0) { arrivalDepartureLog.forEach(entry => { const row = adTbody.insertRow(); row.insertCell().textContent = entry.time; const arrivalsCell = row.insertCell(); const arrivalsSpan = document.createElement('span'); arrivalsSpan.className = 'arrivals-text'; arrivalsSpan.textContent = entry.arrivals.join(', '); arrivalsCell.appendChild(arrivalsSpan); const departuresCell = row.insertCell(); const departuresSpan = document.createElement('span'); departuresSpan.className = 'departures-text'; departuresSpan.textContent = entry.departures.join(', '); departuresCell.appendChild(departuresSpan); }); } else { const row = adTbody.insertRow(); const cell = row.insertCell(); cell.colSpan = 3; cell.textContent = `No arrivals or departures within the ${shiftType === 'day' ? '5AM-2PM' : '2PM-11PM'} range.`; cell.style.textAlign = "center"; } planOutputDiv.appendChild(document.createElement('h2')).textContent = `Employee Arrivals & Departures (${shiftType.charAt(0).toUpperCase() + shiftType.slice(1)} Shift)`; planOutputDiv.appendChild(adTableContainer).appendChild(adTable);
+
+        };
+
+        
+
+        function showMessage(msg,type){const mb=document.getElementById('messageBox');mb.textContent=msg;mb.style.display='block';mb.style.backgroundColor=type==='success'?'#d4edda':'#f8d7da';mb.style.color=type==='success'?'#155724':'#721c24';};
+
+        function copyPlanToClipboard(){if(!document.getElementById('planOutput').innerHTML){showMessage(APP_CONFIG.STRINGS.MSG_NO_PLAN_TO_COPY,'error');return}let ttc='';const ttp=(te,t)=>{if(!te)return '';let txt=t?t+':\n':'';Array.from(te.querySelectorAll('th')).forEach((th,i,a)=>txt+=th.textContent+(i===a.length-1?'\n':'\t'));te.querySelectorAll('tbody tr').forEach(r=>{Array.from(r.querySelectorAll('td')).forEach((td,i,a)=>txt+=td.textContent+(i===a.length-1?'\n':'\t'));});return txt};ttc+=ttp(document.getElementById('lineupOutputTable'),'Lineup')+'\n';ttc+=ttp(document.getElementById('rosterOutputTable'),'Roster')+'\n';const st=document.querySelector('input[name="shiftType"]:checked').value;const staffT=document.getElementById('staffingOutputTable');if(staffT){const title=`Staffing Levels Per Half Hour (${st.charAt(0).toUpperCase()+st.slice(1)} Shift)`;ttc+=ttp(staffT,title)+'\n';}const adTable=document.getElementById('arrivalDepartureTable');if(adTable){const title=`Employee Arrivals & Departures (${st.charAt(0).toUpperCase()+st.slice(1)} Shift)`;ttc+=ttp(adTable,title);}const tmpC=document.getElementById('tempClipboard');tmpC.value=ttc;tmpC.select();try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ttc).then(()=>{showMessage(APP_CONFIG.STRINGS.MSG_PLAN_COPIED,'success')}).catch(e=>{document.execCommand('copy');showMessage(APP_CONFIG.STRINGS.MSG_PLAN_COPIED_FALLBACK,'success')})}else{document.execCommand('copy');showMessage(APP_CONFIG.STRINGS.MSG_PLAN_COPIED,'success')}}catch(e){showMessage(APP_CONFIG.STRINGS.MSG_FAILED_TO_COPY,'error')}};
+
+        function handleRawDataInput(){const rd=document.getElementById('rawDataInput').value;const emps=rd.trim().length>0?parseRawData(rd):[];populateEmployeeDropdowns(emps);if(emps.length===0){document.getElementById('planOutput').innerHTML='';document.getElementById('messageBox').style.display='none';document.getElementById('debugOutput').style.display='none';}};
+
+        function printPlan(){if(!document.getElementById('planOutput').innerHTML){showMessage(APP_CONFIG.STRINGS.MSG_NO_PLAN_TO_PRINT,'error');return}window.print()};
+
+
+        function planShift() {
+
+            try {
+
+                // console.clear(); 
+
+                const shiftTypeRadio = document.querySelector('input[name="shiftType"]:checked');
+
+                if (!shiftTypeRadio) {
+
+                    showMessage("Error: No shift type selected. Please select Day or Night shift.", "error");
+
+                    return; 
+
+                }
+
+                const selectedShiftType = shiftTypeRadio.value;
+
+
+                const rawData = document.getElementById('rawDataInput').value;
+
+                if (rawData.trim() === "") {
+
+                    showMessage("Please paste scheduling data.", "error");
+
+                    return;
+
+                }
+
+                let employees = parseRawData(rawData);
+
+                
+
+                let actualShiftPeaks = [];
+
+                if (selectedShiftType === 'day') {
+
+                    const schoolSessionYesRadio = document.getElementById('schoolSessionYes');
+
+                    const schoolIsInSession = schoolSessionYesRadio ? schoolSessionYesRadio.checked : true; 
+
+                    if (schoolIsInSession) {
+
+                        const breakfastPeak = APP_CONFIG.PEAK_HOURS.day.find(p => p.colHeader === 'Breakfast');
+
+                        const lunchPeak = APP_CONFIG.PEAK_HOURS.day.find(p => p.colHeader === 'Lunch (12-1p)'); // Use updated colHeader
+
+                        if (breakfastPeak) actualShiftPeaks.push(breakfastPeak);
+
+                        if (lunchPeak) actualShiftPeaks.push(lunchPeak);
+
+                    } else {
+
+                        actualShiftPeaks.push(APP_CONFIG.DAY_SHIFT_MID_MORNING_PEAK_SCHOOL_OUT);
+
+                        const lunchPeak = APP_CONFIG.PEAK_HOURS.day.find(p => p.colHeader === 'Lunch (12-1p)'); // Use updated colHeader
+
+                        if (lunchPeak) actualShiftPeaks.push(lunchPeak);
+
+                    }
+
+                } else { 
+
+                    actualShiftPeaks = [...APP_CONFIG.PEAK_HOURS.night];
+
+                }
+
+                actualShiftPeaks = actualShiftPeaks.filter(p => p).sort((a, b) => a.start - b.start);
+
+
+                if (!actualShiftPeaks || actualShiftPeaks.length === 0) {
+
+                    showMessage(`Error: No relevant peak hours defined for the current selection.`, "error");
+
+                    return;
+
+                }
+
+
+                employees.sort((a, b) => a.timeInMins - b.timeInMins);
+
+
+                let effectiveBreakRestrictionHours = [...APP_CONFIG.UNIVERSAL_BREAK_RESTRICTIONS];
+
+                if (selectedShiftType === 'day') {
+
+                    const schoolSessionYesRadio = document.getElementById('schoolSessionYes');
+
+                    if (!schoolSessionYesRadio) {
+
+                         showMessage("Error: School session input element not found.", "error");
+
+                         return;
+
+                    }
+
+                    const schoolIsInSession = schoolSessionYesRadio.checked;
+
+                    if (schoolIsInSession) {
+
+                        effectiveBreakRestrictionHours.push(APP_CONFIG.DAY_SHIFT_BREAKFAST_RESTRICTIONS.schoolInSession);
+
+                    } else {
+
+                        effectiveBreakRestrictionHours.push(APP_CONFIG.DAY_SHIFT_BREAKFAST_RESTRICTIONS.schoolNotInSession);
+
+                    }
+
+                }
+
+                effectiveBreakRestrictionHours.sort((a,b) => a.start - b.start);
+
+
+                const globalBreakCounts = {}; 
+
+                for (let m = 0; m < 1440; m += 15) globalBreakCounts[m] = 0;
+
+                
+
+                employees.forEach(emp => { 
+
+                    emp.breakTime = calculateBreak(emp.timeInMins, emp.timeOutMins, globalBreakCounts, effectiveBreakRestrictionHours); 
+
+                });
+
+                detectConcurrentBreaksAfterAssignment(employees, globalBreakCounts); 
+
+                
+
+                const lineupData = APP_CONFIG.LINEUP_POSITIONS_DETAILS.map(pos=>{const lineupEntry={id:pos.id,amBuildTo:pos.amBuildTo,pmBuildTo:pos.pmBuildTo};actualShiftPeaks.forEach(peak=>lineupEntry[peak.colHeader]='');return lineupEntry});
+
+                const slN=document.getElementById('shiftLeaderSelect').value;let allSLoSL=[];if(slN){allSLoSL=employees.filter(e=>e.name===slN);if(allSLoSL.length>0){if(allSLoSL[0].timeInMins===-1||allSLoSL[0].timeOutMins===-1){showMessage(APP_CONFIG.STRINGS.MSG_SL_TIMES_UNPARSEABLE_PREFIX+allSLoSL[0].name+APP_CONFIG.STRINGS.MSG_SL_TIMES_UNPARSEABLE_SUFFIX,'error');allSLoSL=[]}}else{showMessage(APP_CONFIG.STRINGS.MSG_SHIFT_LEADER_NOT_FOUND_PREFIX+slN+APP_CONFIG.STRINGS.MSG_SHIFT_LEADER_NOT_FOUND_SUFFIX,'error')}}const cpN=document.getElementById('checklistPersonSelect').value;let cpI=null;if(selectedShiftType==='night'&&cpN){cpI=employees.find(e=>e.name===cpN);if(!cpI){showMessage(APP_CONFIG.STRINGS.MSG_CHECKLIST_PERSON_NOT_FOUND_PREFIX+cpN+APP_CONFIG.STRINGS.MSG_CHECKLIST_PERSON_NOT_FOUND_SUFFIX,'error')}else{if(cpI)cpI.notes=(cpI.notes?cpI.notes+'; ':'')+APP_CONFIG.STRINGS.MSG_ASSIGNED_CHECKLIST_PERSON}}const slLID=APP_CONFIG.SHIFT_LEAD_LINEUP_IDS[selectedShiftType];const slLET=APP_CONFIG.LINEUP_POSITIONS_DETAILS.find(e=>e.id===slLID);
+
+                
+
+                actualShiftPeaks.forEach(p=>{
+
+                    // console.log(`--- Processing Peak: ${p.colHeader} (${minutesToTime(p.start)} - ${minutesToTime(p.end)}) ---`);
+
+                    let avFP=employees.filter(e=>{const wDP=e.timeInMins<=p.start&&e.timeOutMins>=p.end;if(!wDP)return false;if(e.breakTime&&![APP_CONFIG.STRINGS.NO_BREAK_NEEDED,APP_CONFIG.STRINGS.BREAK_CONFLICT_MESSAGE].includes(e.breakTime)){const [bsS,beS]=e.breakTime.split(' - ');const bsM=timeToMinutes(bsS);const beM=timeToMinutes(beS);if(bsM===-1||beM===-1)return true;if(bsM<p.end&&beM>p.start)return false}return true});
+
+                    let eFGA=[...avFP];
+
+                    // console.log(`  1. Peak: ${p.colHeader}. Employees initially available for peak (scheduled for full peak duration & not on break): ${avFP.length}`);
+
+
+                    if(slN&&allSLoSL.length>0&&slLET){let aSLTDR=false;for(const slS of allSLoSL){if(slS.timeInMins===-1||slS.timeOutMins===-1){continue}const iSLWDP=slS.timeInMins<p.end&&slS.timeOutMins>p.start;if(iSLWDP){aSLTDR=true;break;}} if(aSLTDR){const acLE=lineupData.find(e=>e.id===slLID);if(acLE){acLE[p.colHeader]=slN;eFGA=eFGA.filter(e=>e.name!==slN); /* console.log(`  2. Peak: ${p.colHeader}. Shift Leader (${slN}) assigned. Pool for general assignment: ${eFGA.length}`); */ }}}
+
+                    if(selectedShiftType==='night'&&p.colHeader==='9-10pm'&&cpI){const cpSch=cpI.timeInMins<p.end&&cpI.timeOutMins>p.start;let slIsCpAARThisPeak=false;if(slN&&slN===cpI.name){const slLE=lineupData.find(e=>e.id===slLID);if(slLE&&slLE[p.colHeader]===slN)slIsCpAARThisPeak=true}if(cpSch&&!slIsCpAARThisPeak&&eFGA.some(e=>e.name===cpI.name)){eFGA=eFGA.filter(e=>e.name!==cpI.name); /* console.log(`  3. Peak: ${p.colHeader}. Checklist Person (${cpI.name}) removed. Pool for general assignment: ${eFGA.length}`); */}}
+
+                    
+
+                    // console.log(`  4. Peak: ${p.colHeader}. Employees available for general assignment: ${eFGA.length}`);
+
+                    let assignedInLoopCount = 0;
+
+                    const tempGeneralPool = [...eFGA]; 
+
+
+                    for(let i=tempGeneralPool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[tempGeneralPool[i],tempGeneralPool[j]]=[tempGeneralPool[j],tempGeneralPool[i]]}
+
+                    for(const det of APP_CONFIG.LINEUP_POSITIONS_DETAILS){
+
+                        if (tempGeneralPool.length === 0) break;
+
+                        const cPN=selectedShiftType==='day'?det.amBuildTo:det.pmBuildTo;const lE=lineupData.find(e=>e.id===det.id);
+
+                        if(lE&&cPN&&cPN.trim()!==''){if(lE[p.colHeader]===''){lE[p.colHeader]=tempGeneralPool.shift().name; assignedInLoopCount++;}}
+
+                    }
+
+                    // console.log(`  5. Peak: ${p.colHeader}. Assigned ${assignedInLoopCount} employees in general loop.`);
+
+                    // if (tempGeneralPool.length > 0) {
+
+                    //    console.warn(`  WARNING: ${tempGeneralPool.length} employees left over after general assignment for peak ${p.colHeader}:`, tempGeneralPool.map(e=>e.name));
+
+                    // }
+
+                });
+
+                
+
+                const scheduledCounts = calculateScheduledCounts(employees,selectedShiftType);
+
+                const breaksInIntervalData = calculateBreaksInIntervalCounts(employees,selectedShiftType);
+
+                const arrivalDepartureLogData = calculateArrivalDepartureLog(employees, selectedShiftType);
+
+                const dynamicPeakColumnHeaders = actualShiftPeaks.map(p => p.colHeader);
+
+
+                renderPlan(lineupData,employees,selectedShiftType,scheduledCounts,breaksInIntervalData, arrivalDepartureLogData, dynamicPeakColumnHeaders);
+
+                
+
+                document.getElementById('copyButton').style.display='flex';document.getElementById('printButton').style.display='flex';showMessage(APP_CONFIG.STRINGS.MSG_SHIFT_PLANNED_SUCCESS,'success')
+
+            } catch (error) {
+
+                console.error("Error during planShift execution:", error);
+
+                showMessage(`An error occurred: ${error.message}. Please check console (F12) if possible, or report the error.`, "error");
+
+            }
+
+        };
+
+
+        document.addEventListener('DOMContentLoaded',()=>{
+
+            updateShiftTypeSpecificUI();
+
+            document.querySelectorAll('.button-group button').forEach(b=>{if(!b.hasAttribute('type'))b.setAttribute('type','button')});
+
+            const dO=document.getElementById('debugOutput');if(dO)dO.style.display='none';
+
+
+            const disclaimerPopup = document.getElementById('disclaimerPopup');
+
+            const closeDisclaimerBtn = document.getElementById('closeDisclaimerBtn');
+
+            if (disclaimerPopup && closeDisclaimerBtn) {
+
+                disclaimerPopup.style.display = 'block'; 
+
+                closeDisclaimerBtn.addEventListener('click', () => {
+
+                    disclaimerPopup.style.display = 'none';
+
+                });
+
+            }
+
+        });
+
+    </script>
+
+</body>
+
+</html>
+
+
