@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Shift Planner Application</title>
+
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #ffccee;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(255,0,127,0.3);
+            border: 3px solid #FF007F;
+        }
+        h1 {
+            color: #E6006F;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 2px solid #FF007F;
+            border-radius: 4px;
+            box-sizing: border-box;
+            min-height: 150px;
+            font-family: monospace;
+            background-color: #fff;
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 2px solid #FF007F;
+            border-radius: 5px;
+            background-color: #ffe6f5;
+        }
+
+        .input-section label {font-weight: bold; display: block; margin-bottom: 10px;}
+
+        .radio-group {display: flex; align-items: center; gap: 5px;}
+
+        .radio-group label {font-weight: normal; margin-right: 15px; margin-bottom: 0; display: inline-block;}
+
+        .radio-group input[type="radio"] {margin-right: 5px;}
+
+        .dropdown-group select {width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; margin-top: 5px;}
+
+        .button-group {display: flex; gap: 10px; margin-bottom: 20px;}
+
+        button {flex: 1; padding: 10px 15px; background-color: #FF007F; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; transition: background-color 0.2s ease;}
+
+        button:hover {background-color: #CC005F;}
+
+        #copyButton {background-color: #FF007F;}
+
+        #copyButton:hover {background-color: #CC005F;}
+
+        #printButton {background-color: #FF007F;}
+
+        #printButton:hover {background-color: #CC005F;}
+
+        .message-box {background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 10px; border-radius: 4px; margin-top: 10px; text-align: center; display: none;}
+
+        .output-section {margin-top: 20px;}
+
+        .output-section h2 {margin-bottom: 10px; color: #0056b3;}
+
+        .output-table-container {overflow-x: auto; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px;}
+
+        .output-table {width: 100%; border-collapse: collapse; min-width: 600px; border: 2px solid #FF007F;}
+
+        .output-table th, .output-table td {border: 1px solid #FF007F; padding: 8px; text-align: left; white-space: nowrap;}
+
+        .output-table th {background-color: #ffe6f5; color: #E6006F; font-weight: bold;}
+
+        .output-table tr:nth-child(even) {background-color: #ffe6f5;}
+
+
+
+        #arrivalDepartureTable td { white-space: normal; word-break: break-word; vertical-align: top; }
+
+        .arrivals-text { color: green; font-weight: bold; }
+
+        .departures-text { color: red; font-weight: bold; }
+
+
+        #tempClipboard {position: absolute; left: -9999px;}
+
+        #debugOutput {display: none;} 
+
+
+        @media print {
+
+            body { margin: 0; background-color: #fff; color: #000; }
+
+            .container { box-shadow: none; border-radius: 0; padding: 0; max-width: 100%; }
+
+            .input-section, .button-group, .message-box, #debugOutput, #disclaimerPopup { display: none !important; }
+
+            h1 { text-align: left; margin-left: 20px; }
+
+            .output-section h2 { margin-left: 20px; }
+
+            .output-table-container { border: none; margin-left: 20px; margin-right: 20px; overflow-x: visible;}
+
+            .output-table { min-width: unset; width: auto; } 
+
+            .output-table th, .output-table td { white-space: normal; padding: 5px; } 
+
+            #arrivalDepartureTable { width: 100%; } 
+
+        }
+
+        .disclaimer-popup { position: fixed; top: 20px; right: 20px; width: 350px; max-width: 90%; background-color: #fff3e0; border: 1px solid #ffcc80; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1001; font-size: 0.85em; color: #5d4037; }
+
+        .disclaimer-header { background-color: #ffa726; color: white; padding: 8px 15px; border-top-left-radius: 7px; border-top-right-radius: 7px; display: flex; justify-content: space-between; align-items: center; }
+
+        .disclaimer-header span { font-weight: bold; }
+
+        .disclaimer-content { padding: 15px; line-height: 1.5; }
+
+        .disclaimer-content p { margin: 0 0 10px 0; }
+
+        .disclaimer-content p:last-child { margin-bottom: 0; }
+
+        .close-btn { background: none; border: none; color: white; font-size: 1.6em; font-weight: bold; cursor: pointer; padding: 0 5px; line-height: 1;}
+
+        .close-btn:hover { color: #fffde7; }
+
+        /* Dark mode styles */
+        [data-theme="dark"] body {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        [data-theme="dark"] .container {
+            background-color: #2d2d2d;
+            border: 1px solid #404040;
+        }
+
+        [data-theme="dark"] h1 {
+            color: #4a9eff;
+        }
+
+        [data-theme="dark"] textarea {
+            background-color: #3a3a3a;
+            color: #e0e0e0;
+            border: 1px solid #555;
+        }
+
+        [data-theme="dark"] .input-section {
+            background-color: #2a2a2a;
+            border: 1px solid #404040;
+        }
+
+        [data-theme="dark"] .dropdown-group select {
+            background-color: #3a3a3a;
+            color: #e0e0e0;
+            border: 1px solid #555;
+        }
+
+        [data-theme="dark"] button {
+            background-color: #FF007F;
+        }
+
+        [data-theme="dark"] button:hover {
+            background-color: #CC005F;
+        }
+
+        [data-theme="dark"] #copyButton {
+            background-color: #FF007F;
+        }
+
+        [data-theme="dark"] #copyButton:hover {
+            background-color: #CC005F;
+        }
+
+        [data-theme="dark"] #printButton {
+            background-color: #FF007F;
+        }
+
+        [data-theme="dark"] #printButton:hover {
+            background-color: #CC005F;
+        }
+
+        [data-theme="dark"] .output-table {
+            background-color: #2d2d2d;
+            border: 2px solid #FF007F;
+        }
+
+        [data-theme="dark"] .output-table th {
+            background-color: #4D0026;
+            color: #ffccee;
+            border: 1px solid #FF007F;
+            font-weight: bold;
+        }
+
+        [data-theme="dark"] .output-table td {
+            border: 1px solid #FF007F;
+            color: #e0e0e0;
+        }
+
+        [data-theme="dark"] .output-table tr:nth-child(even) {
+            background-color: #400022;
+        }
+
+        [data-theme="dark"] .output-table-container {
+            border: 2px solid #FF007F;
+        }
+
+        [data-theme="dark"] .disclaimer-popup {
+            background-color: #330022;
+            border: 2px solid #FF007F;
+            color: #e0e0e0;
+        }
+
+        [data-theme="dark"] .disclaimer-header {
+            background-color: #FF007F;
+        }
+
+        [data-theme="dark"] .theme-toggle {
+            background-color: #FF007F;
+            color: #fff;
+        }
+
+        [data-theme="dark"] .theme-toggle:hover {
+            background-color: #CC005F;
+        }
+
+        /* Dark mode toggle button */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            font-size: 20px;
+            z-index: 1000;
+            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            background-color: #0056b3;
+        }
+
+        [data-theme="dark"] .theme-toggle {
+            background-color: #f48fb1;
+            color: #000;
+        }
+
+        [data-theme="dark"] .theme-toggle:hover {
+            background-color: #f06292;
+        }
+
+        /* Drag and drop styles */
+        .draggable-employee {
+            cursor: move;
+            background-color: transparent;
+            border: 1px solid #2196f3;
+            border-radius: 3px;
+            padding: 2px 4px;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+
+        .draggable-employee:hover {
+            background-color: rgba(187, 222, 251, 0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .dragging {
+            opacity: 0.3;
+            transform: rotate(5deg);
+        }
+
+        .drop-zone {
+            min-height: 25px;
+            border: 2px dashed transparent;
+            transition: all 0.2s ease;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #4caf50;
+            background-color: #e8f5e8;
+        }
+
+        [data-theme="dark"] .draggable-employee {
+            background-color: transparent;
+            border-color: #42a5f5;
+            color: #e0e0e0;
+        }
+
+        [data-theme="dark"] .draggable-employee:hover {
+            background-color: rgba(25, 118, 210, 0.3);
+        }
+
+        [data-theme="dark"] .drop-zone.drag-over {
+            border-color: #66bb6a;
+            background-color: #2e5d2e;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <button id="themeToggle" class="theme-toggle" title="Toggle dark mode">🌙</button>
+
+    <div id="disclaimerPopup" class="disclaimer-popup" style="display: none;">
+
+        <div class="disclaimer-header">
+
+            <span>Important Notice</span>
+
+            <button id="closeDisclaimerBtn" class="close-btn" aria-label="Close Disclaimer">&times;</button>
+
+        </div>
+
+        <div class="disclaimer-content">
+
+            <p>This shift planner provides a guideline based on scheduled availability and may not account for all individual employee skills or specific operational needs.</p>
+
+            <p>Plans generated by this application should be reviewed. This tool does not supersede primary scheduling directives provided by senior leadership.</p>
+
+            <p>This does have *BASIC* Skill Knowledge of our Team Members</p>
+
+            <p>Jesse, I know you saw this :)</p>
+
+        </div>
+
+    </div>
+
+
+    <div class="container">
+
+        <h1>Chick-fil-A Fountain City Shift Planner</h1>
+
+        <p>Paste your raw scheduling data below. The application will then help plan breaks and positions.</p>
+
+        <textarea id="rawDataInput" placeholder="Paste your scheduling data here..." oninput="handleRawDataInput()"></textarea>
+
+
+
+        <div class="input-section">
+
+            <label id="shiftTypeLabel">Select Shift Type:</label>
+
+            <div class="radio-group" role="radiogroup" aria-labelledby="shiftTypeLabel">
+
+                <input type="radio" name="shiftType" value="day" id="shiftTypeDay" checked onchange="updateShiftTypeSpecificUI()">
+
+                <label for="shiftTypeDay">Day Shift</label>
+
+                <input type="radio" name="shiftType" value="night" id="shiftTypeNight" onchange="updateShiftTypeSpecificUI()">
+
+                <label for="shiftTypeNight">Night Shift</label>
+
+            </div>
+
+        </div>
+
+
+        <div class="input-section" id="schoolSessionSection" style="display: none;">
+
+            <label id="schoolSessionLabel">Is School in Session?</label>
+
+            <div class="radio-group" role="radiogroup" aria-labelledby="schoolSessionLabel">
+
+                <input type="radio" name="schoolSession" value="yes" id="schoolSessionYes" checked>
+
+                <label for="schoolSessionYes">Yes (Breaks restricted 7:30-9:00 AM)</label>
+
+                <input type="radio" name="schoolSession" value="no" id="schoolSessionNo">
+
+                <label for="schoolSessionNo">No (Breaks restricted 9:30-10:30 AM)</label>
+
+            </div>
+
+        </div>
+
+
+        <div class="input-section dropdown-group">
+
+            <label for="shiftLeaderSelect">Assign Shift Leader:</label>
+
+            <select id="shiftLeaderSelect"><option value="">-- Select Shift Leader (Optional) --</option></select>
+
+            <small style="display: block; margin-top: 5px; color: #666;">Click "Plan Shift" after selecting to update the lineup.</small>
+
+        </div>
+
+        <div class="input-section dropdown-group" id="checklistPersonSection" style="display: none;">
+
+            <label for="checklistPersonSelect">Assign Checklist Person (Night Shift Only):</label>
+
+            <select id="checklistPersonSelect"><option value="">-- Select Checklist Person (Optional) --</option></select>
+
+            <small style="display: block; margin-top: 5px; color: #666;">Click "Plan Shift" after selecting to update the lineup.</small>
+
+        </div>
+
+        <div class="button-group">
+            <button type="button" onclick="planShift()">Plan Shift</button>
+            <button type="button" id="copyButton" onclick="copyPlanToClipboard()">Copy Plan to Clipboard</button>
+            <button type="button" id="printButton" onclick="printPlan()">Print Plan (Save as PDF)</button>
+            <!-- New Login button -->
+            <a href="https://www.hotschedules.com/hs/login.jsp" target="_blank">
+                <button style="background-color: #007bff; color: white; border: none; border-radius: 4px; padding: 10px 15px; font-size: 16px; cursor: pointer;">
+                    Login to HotSchedules
+                </button>
+            </a>
+        </div>
+
+        <div id="messageBox" class="message-box" aria-live="polite"></div>
+
+        <div class="output-section" id="debugOutput">
+
+            <h2>Employees Available Per Peak (Debug):</h2><pre id="peakAvailabilityOutput"></pre>
+
+            <h2>Break Slot Counts (Debug):</h2><pre id="breakCountsOutput"></pre>
+
+        </div>
+
+        <div class="output-section" id="planOutput"></div>
+
+        <div class="output-section" id="closingTasksOutput" style="display: none;">
+            <h2>Closing Tasks (10:30 PM)</h2>
+            <div class="output-table-container">
+                <table id="closingTasksTable" class="output-table">
+                    <thead>
+                        <tr>
+                            <th>Task</th>
+                            <th>Assigned Employee</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <textarea id="tempClipboard"></textarea>
+
+    </div>
+
+
+    <script>
+
+        // --- UTILITY FUNCTIONS ---
+
+        function timeToMinutes(timeStr) { if (!timeStr) return -1; const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i); if (!match) { /* console.warn("timeToMinutes failed for:", timeStr); */ return -1; } let h = parseInt(match[1]); const m = parseInt(match[2]); const p = match[3].toLowerCase(); if (p === 'pm' && h !== 12) h += 12; else if (p === 'am' && h === 12) h = 0; return h * 60 + m; }
+
+        function minutesToTime(totalMinutes) { const h = Math.floor(totalMinutes / 60); const m = totalMinutes % 60; const period = h >= 12 && h < 24 ? 'PM' : 'AM'; let dH = h % 12; if (dH === 0) dH = 12; const dM = m < 10 ? '0' + m : m; return `${dH}:${dM} ${period}`; };
+
+
+
+        // --- APPLICATION CONFIGURATION ---
+
+        const APP_CONFIG = {
+
+            PEAK_HOURS: {
+
+                day: [ 
+
+                    { name: 'Breakfast', start: timeToMinutes("7:30AM"), end: timeToMinutes("9:00AM"), colHeader: 'Breakfast' },
+
+                    // ** MODIFIED Lunch Peak Definition for Day Shift **
+
+                    { name: 'Lunch Core', start: timeToMinutes("12:00PM"), end: timeToMinutes("1:00PM"), colHeader: 'Lunch (12-1p)' }
+
+                ],
+
+                night: [ 
+
+                    { name: 'Dinner Core', start: timeToMinutes("6:00PM"), end: timeToMinutes("7:00PM"), colHeader: 'Dinner (6-7p)' }, 
+
+                    { name: '9-10pm', start: timeToMinutes("9:00PM"), end: timeToMinutes("10:00PM"), colHeader: '9-10pm' }
+
+                ]
+
+            },
+
+            DAY_SHIFT_MID_MORNING_PEAK_SCHOOL_OUT: { name: 'Mid-Morning Rush', start: timeToMinutes("9:30AM"), end: timeToMinutes("10:30AM"), colHeader: '9:30-10:30am' },
+
+            DAY_SHIFT_BREAKFAST_RESTRICTIONS: { schoolInSession: { start: timeToMinutes("7:30AM"), end: timeToMinutes("9:00AM") }, schoolNotInSession: { start: timeToMinutes("9:30AM"), end: timeToMinutes("10:30AM") } },
+
+            UNIVERSAL_BREAK_RESTRICTIONS: [ { start: timeToMinutes("11:30AM"), end: timeToMinutes("1:00PM") }, { start: timeToMinutes("1:00PM"), end: timeToMinutes("2:00PM") }, { start: timeToMinutes("5:30PM"), end: timeToMinutes("7:00PM") } ],
+
+            SHIFT_TIME_RANGES: { day: { start: 300, end: 840 }, night: { start: 840, end: 1380 } }, // 5AM-2PM, 2PM-11PM
+
+            LINEUP_POSITIONS_DETAILS: [ { id: 1, amBuildTo: "Headset 1", pmBuildTo: "Cash 1" }, { id: 2, amBuildTo: "Headset 2", pmBuildTo: "Cash 2" },{ id: 3, amBuildTo: "Window", pmBuildTo: "DT Stager/Door" }, { id: 4, amBuildTo: "DT Bagger", pmBuildTo: "DT Bagger" },{ id: 5, amBuildTo: "DT Drinks", pmBuildTo: "DT Drinks" }, { id: 6, amBuildTo: "Register 1", pmBuildTo: "Register 1" },{ id: 7, amBuildTo: "FC Bagger", pmBuildTo: "FC Expo" }, { id: 8, amBuildTo: "FC Expo", pmBuildTo: "FC Bagger" },{ id: 9, amBuildTo: "DT Stuffer", pmBuildTo: "DT Stuffer/hurricane" }, { id: 10, amBuildTo: "FC Drinks/Desserts", pmBuildTo: "Headset 3" },{ id: 11, amBuildTo: "Headset 3", pmBuildTo: "FC Drinks/Register 2" }, { id: 12, amBuildTo: "Shift Lead/Stocker", pmBuildTo: "Desserts" },{ id: 13, amBuildTo: "Register 2", pmBuildTo: "Register 2" }, { id: 14, amBuildTo: "OS Cash", pmBuildTo: "Headset 4" },{ id: 15, amBuildTo: "Desserts", pmBuildTo: "Shift Lead" }, { id: 16, amBuildTo: "Dining Room", pmBuildTo: "OS Expo" },{ id: 17, amBuildTo: "Middle Bagger 1", pmBuildTo: "Hospitality" }, { id: 18, amBuildTo: "Headset 4", pmBuildTo: "Middle Bagger" },{ id: 19, amBuildTo: "OS Expo", pmBuildTo: "FC Stuffer" }, { id: 20, amBuildTo: "FC Expo 2", pmBuildTo: "Headset 5" },{ id: 21, amBuildTo: "Middle Bagger 2", pmBuildTo: "Middle Bagger 2" }, { id: 22, amBuildTo: "Register 3", pmBuildTo: "Register 3" },{ id: 23, amBuildTo: "FC Stager", pmBuildTo: "FC Stuffer" }, { id: 24, amBuildTo: "Drinks 3", pmBuildTo: "Drinks 3" },{ id: 25, amBuildTo: "Headset 5", pmBuildTo: "Headset 5" }, { id: 26, amBuildTo: "Cash 2", pmBuildTo: "" },{ id: 27, amBuildTo: "OS Expo 2", pmBuildTo: "" }, { id: 28, amBuildTo: "FC Expo 3", pmBuildTo: "" },{ id: 29, amBuildTo: "2nd Mile", pmBuildTo: "" }, { id: 30, amBuildTo: "FC Drinks 2", pmBuildTo: "" } ],
+
+            BREAK_DURATION_MINS: 30, MIN_WORK_BEFORE_BREAK_MINS: 60, MAX_CONCURRENT_BREAKS: 2,
+
+            SHIFT_LEAD_LINEUP_IDS: { day: 12, night: 15 },
+
+            DAY_LEADER_START_TIMES_MINS: [timeToMinutes("5:00AM"), timeToMinutes("5:30AM")],
+
+            NIGHT_SHIFT_CRITICAL_END_TIME_MINS: timeToMinutes("10:30PM"),
+
+            STRINGS: { NO_BREAK_NEEDED: 'No break needed', BREAK_CONFLICT_MESSAGE: 'Break conflict: No clear slot found.', WARNING_CONCURRENT_BREAKS: 'WARNING: Break contributes to >2 concurrent.', MSG_SHIFT_LEADER_NOT_FOUND_PREFIX: 'Shift leader "', MSG_SHIFT_LEADER_NOT_FOUND_SUFFIX: '" not found in schedule. Check spelling or ensure they are scheduled.', MSG_SL_TIMES_UNPARSEABLE_PREFIX: 'Error: Could not parse schedule times for selected Shift Leader "', MSG_SL_TIMES_UNPARSEABLE_SUFFIX: '". Please check raw data format.', MSG_CHECKLIST_PERSON_NOT_FOUND_PREFIX: 'Checklist person "', MSG_CHECKLIST_PERSON_NOT_FOUND_SUFFIX: '" not found in schedule.', MSG_ASSIGNED_CHECKLIST_PERSON: 'Assigned as Checklist Person.', MSG_NO_PLAN_TO_COPY: 'No plan to copy. Please plan the shift first.', MSG_PLAN_COPIED: 'Plan copied to clipboard!', MSG_PLAN_COPIED_FALLBACK: 'Plan copied to clipboard! (using fallback)', MSG_FAILED_TO_COPY: 'Failed to copy plan. Please copy manually.', MSG_NO_PLAN_TO_PRINT: 'No plan to print. Please plan the shift first.', MSG_SHIFT_PLANNED_SUCCESS: 'Shift planned successfully!' }
+
+        };
+/// This is where the skills are defined for each employee. This is a work in progress and will be updated as we get more data. If there are any changes to the skills of any employee, please update this section.
+
+const EMPLOYEE_SKILLS = {
+    "Evelyn Abel": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Checklist"],
+
+    "Trevor Anderson": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Checklist"],
+
+    "Logan Armes": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Drinks", "Register 1", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "David Bailey": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Drinks", "Register 1", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Stuart Baker": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Drinks", "Register 1", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "David Bell": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger", "Middle Bagger 1", "Middle Bagger 2", "Checklist", "Shift Leader"],
+
+    "Eliana Boyce": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "Register 1", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Alexander Brown": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "Register 1", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Amity Bullock": ["Register 1", "FC Expo", "Headset 3", "FC Drinks/Register 2", "Register 2", "Headset 4", "Dining Room", "Hospitality", "Headset 4", "FC Expo 2", "Headset 5", "Register 3", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Keaton Burnett": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Tyler Coapman": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Shift Leader", "Checklist"],
+
+    "Allie Crass": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist"],
+
+    "David Dallman": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist"],
+
+    "Michaela Daulton": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2","Checklist", "Shift Leader"],
+
+    "RyanG Davis": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist", "Shift Leader"],
+
+    "Hunter Devotie": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist"],
+
+    "RyanS Davis": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Register 1", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Zoe Dupree": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Register 1", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Desserts", "FC Drinks/Desserts"],
+
+    "Ryan Ensor": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2"],
+
+    "Zachary Evans": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Timothy Faulk": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist"],
+
+    "Anna Feliciano": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist"],
+
+    "Jesse Fisher": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Shift Leader", "Checklist"],
+
+    "Christina Fulton": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Shift Leader", "Checklist"],
+
+    "Nicole George": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist", "Shift Leader"],
+
+    "Isabella Gilliam": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist"],
+
+    "John Foote": ["Register 1", "FC Expo", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "Headset 4", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Micah Glinski": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "Register 1", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Tonalli Guerrero": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "Register 1", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Sarah Hall": ["Register 1", "FC Expo", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "Headset 4", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Isaac Hall": ["Register 1", "FC Expo", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "Headset 4", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Emma Hayes": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Sara Huck": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist", "Shift Leader"],
+
+    "Angelina Jackson Sasser": ["DT Stager/Door", "Register 1", "FC Expo", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "Headset 4", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Tamara Johnson": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Shift Leader", "Checklist"],
+
+    "Ashley Jones": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Drinks", "Register 1", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Maria Juan Andres": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "Register 1", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Tristan Kuykendall": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist"],
+
+    "Michael Lafollette": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist"],
+
+    "Cadence Lake": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist", "Shift Leader"],
+
+    "Kayla Lewis": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist"],
+
+    "Asher Lewis": ["Dining Room", "Hospitality"],
+
+    "Grace Lingren": ["Register 1", "FC Expo", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "Headset 4", "Dining Room", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2"],
+
+"Bianca Lopez": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Drinks", "Register 1", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Skyla Lovell": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Drinks", "Register 1", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Hayden Luttrell": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Drinks", "Register 1", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Krystian Mateo": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist", "Shift Leader"],
+
+    "Mariah Mireles": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist"],
+
+    "Damian Muckle": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist", "Shift Leader"],
+
+    "Kellyn Mulrooney": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2"],
+
+    "Alfonso Martinez": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Drinks", "Register 1", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Summer Munsey": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Register 1", "FC Expo", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Kylie Musto": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Register 1", "FC Expo", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Dining Room", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Lillie Nesbitt": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2"],
+
+    "Eveline Nesbitt": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Register 1", "FC Expo", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Ashlyn Owens": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist"],
+
+    "Noah Prichard": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Register 1", "FC Expo", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Dining Room", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Logan Ramirez": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "Register 1", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Chance Ramsey": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist", "Shift Leader"],
+
+    "Kate Redd": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist"],
+
+    "Kaitlyn Reott": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2"],
+
+    "Samantha Rhodes": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist", "Shift Leader"],
+
+    "Daniel Sanderson": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist", "Shift Leader"],
+
+    "Abigail Sanderson": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2"],
+
+    "Kara Schrock": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "Register 1", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Sabrina Serrano": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist", "Shift Leader"],
+
+    "Anne Sherwood": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Drinks", "Register 1", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Jaiden Sims": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "Register 1", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Kaiden Soppet": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist", "Shift Leader"],
+
+    "Thomas Strickland": ["Headset 1", "Cash 1", "Headset 2", "DT Stuffer", "Cash 2", "Register 1", "FC Expo", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Dining Room", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "DT Drinks"],
+
+    "Autumn Thames": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist", "Shift Leader"],
+
+    "Karis Thomas": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist"],
+
+    "Trey Thompson": ["Register 1", "FC Expo", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Dining Room", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"],
+
+    "Hannah Van Druff": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist", "Shift Leader"],
+
+    "Daisy Vergara Cerecedo": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist"],
+
+    "Madison Walker": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Bagger", "DT Drinks", "Register 1", "FC Bagger", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Desserts", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2", "Middle Bagger 1", "Middle Bagger 2", "Checklist", "Shift Leader"],
+
+    "Jackson Weaver": ["Headset 1", "Cash 1", "Headset 2", "Cash 2", "Window", "DT Stager/Door", "DT Drinks", "Register 1", "FC Expo", "DT Stuffer", "DT Stuffer/hurricane", "FC Drinks/Desserts", "Headset 3", "FC Drinks/Register 2", "Register 2", "OS Cash", "Headset 4", "Dining Room", "OS Expo", "Hospitality", "Headset 4", "FC Stuffer", "FC Expo 2", "Headset 5", "Register 3", "FC Stager", "Drinks 3", "FC Expo 3", "FC Drinks 2"]
+};
+
+
+
+        // --- CORE FUNCTIONS ---
+
+        function isOverlappingRestrictedBreakTime(cSM, cEM, effectiveRestrictions) { for (const r of effectiveRestrictions) { if (cSM < r.end && cEM > r.start) return true; } return false; };
+
+        function getBuildToPositions(nA, sT) { const pS = []; const l = APP_CONFIG.LINEUP_POSITIONS_DETAILS.length; for (let i=0;i<l;i++) { const d=APP_CONFIG.LINEUP_POSITIONS_DETAILS[i]; let pN=sT==='day'?d.amBuildTo:d.pmBuildTo; if(pN)pS.push(pN); } return pS.filter(p=>p&&p.trim()!=="").slice(0,nA); };
+
+        function calculateBreak(tIM, tOM, gBC, effectiveRestrictions) { const sDH=(tOM-tIM)/60; if(sDH<6)return APP_CONFIG.STRINGS.NO_BREAK_NEEDED; let ePBS=tIM+APP_CONFIG.MIN_WORK_BEFORE_BREAK_MINS; let fS=false; let fB_S=-1,fB_E=-1; for(let cTS=ePBS;cTS+APP_CONFIG.BREAK_DURATION_MINS<=tOM;cTS+=15){ const cTE=cTS+APP_CONFIG.BREAK_DURATION_MINS; if(cTE>tOM)continue; if(isOverlappingRestrictedBreakTime(cTS,cTE, effectiveRestrictions))continue; let wEMB=false; for(let m=cTS;m<cTE;m+=15){if((gBC[m]!==undefined&&gBC[m]>=APP_CONFIG.MAX_CONCURRENT_BREAKS)){wEMB=true;break;}} if(wEMB)continue; fB_S=cTS;fB_E=cTE;fS=true;break;} if(fS){for(let m=fB_S;m<fB_E;m+=15)gBC[m]=(gBC[m]||0)+1;return `${minutesToTime(fB_S)} - ${minutesToTime(fB_E)}`;} else {return APP_CONFIG.STRINGS.BREAK_CONFLICT_MESSAGE;}};
+
+        function parseRawData(rD) { const ls=rD.split('\n').map(l=>l.trim()).filter(l=>l.length>0); const es=[]; let cN=''; for(const l of ls){ if(l.match(/^\(\d{3}\)\s*\d{3}-\d{4}$/)||l.includes('FOH General'))continue; else if(l.match(/^\d{1,2}:\d{2}(AM|PM)\s*-\s*\d{1,2}:\d{2}(AM|PM)$/)){ const [tIS,tOS]=l.split(' - ').map(s=>s.trim()); if(cN){ const e={name:cN,timeIn:tIS,timeOut:tOS,timeInMins:timeToMinutes(tIS),timeOutMins:timeToMinutes(tOS),breakTime:'',notes:''}; Object.values(APP_CONFIG.PEAK_HOURS).flat().forEach(p=>e[p.colHeader]='');es.push(e);}} else if(l.match(/^[A-Z][a-zA-Z\s.'-]*$/i))cN=l;} return es;};
+
+        function populateEmployeeDropdowns(emps) { const slS=document.getElementById('shiftLeaderSelect');const cpS=document.getElementById('checklistPersonSelect');const curSL=slS.value;const curCP=cpS.value;slS.innerHTML='<option value="">-- Select Shift Leader (Optional) --</option>';cpS.innerHTML='<option value="">-- Select Checklist Person (Optional) --</option>';if(!emps||emps.length===0)return; const shiftTypeRadio = document.querySelector('input[name="shiftType"]:checked'); if (!shiftTypeRadio) return; const selectedShiftType = shiftTypeRadio.value;let elE=[];if(selectedShiftType==='day'){elE=emps.filter(e=>e.timeInMins!==-1&&APP_CONFIG.DAY_LEADER_START_TIMES_MINS.includes(e.timeInMins)&&EMPLOYEE_SKILLS[e.name]?.includes('Shift Leader'));}else if(selectedShiftType==='night'){elE=emps.filter(e=>e.timeOutMins===APP_CONFIG.NIGHT_SHIFT_CRITICAL_END_TIME_MINS&&EMPLOYEE_SKILLS[e.name]?.includes('Shift Leader'));}const unELN=[...new Set(elE.map(e=>e.name))].sort();unELN.forEach(n=>{slS.add(new Option(n,n));});if(unELN.includes(curSL))slS.value=curSL;if(selectedShiftType==='night'){const chkElE=emps.filter(e=>e.timeOutMins===APP_CONFIG.NIGHT_SHIFT_CRITICAL_END_TIME_MINS&&EMPLOYEE_SKILLS[e.name]?.includes('Checklist')).map(e=>e.name);[...new Set(chkElE)].sort().forEach(n=>{cpS.add(new Option(n,n));});if([...new Set(chkElE)].includes(curCP))cpS.value=curCP;}};
+
+
+
+        function updateShiftTypeSpecificUI() {
+
+            const selectedShiftTypeRadio = document.querySelector('input[name="shiftType"]:checked');
+
+            if (!selectedShiftTypeRadio) { /* console.error("Shift type radio not found..."); */ return; }
+
+            const selectedShiftType = selectedShiftTypeRadio.value;
+
+            const checklistSection = document.getElementById('checklistPersonSection');
+
+            const schoolSessionSection = document.getElementById('schoolSessionSection'); 
+
+            if (checklistSection) { checklistSection.style.display = selectedShiftType === 'night' ? 'block' : 'none'; if (selectedShiftType !== 'night') { const checklistSelect = document.getElementById('checklistPersonSelect'); if (checklistSelect) checklistSelect.value = ''; } }
+
+            if (schoolSessionSection) { schoolSessionSection.style.display = selectedShiftType === 'day' ? 'block' : 'none'; }
+
+            const rawData = document.getElementById('rawDataInput').value;
+
+            const employees = rawData.trim().length > 0 ? parseRawData(rawData) : [];
+
+            populateEmployeeDropdowns(employees);
+
+        };
+
+
+        function detectConcurrentBreaksAfterAssignment(emps, gBC) { emps.forEach(e=>{if(e.breakTime&&![APP_CONFIG.STRINGS.NO_BREAK_NEEDED,APP_CONFIG.STRINGS.BREAK_CONFLICT_MESSAGE].includes(e.breakTime)){const [bsS,beS]=e.breakTime.split(' - ');const bsM=timeToMinutes(bsS);const beM=timeToMinutes(beS);if(bsM===-1||beM===-1)return;for(let m=bsM;m<beM;m+=15){if(gBC[m]>APP_CONFIG.MAX_CONCURRENT_BREAKS){e.notes=(e.notes?e.notes+'; ':'')+APP_CONFIG.STRINGS.WARNING_CONCURRENT_BREAKS;break;}}}});};
+
+        function calculateScheduledCounts(employees, shiftType) { const shiftRange = APP_CONFIG.SHIFT_TIME_RANGES[shiftType]; const scheduledCounts = {}; for (let time = shiftRange.start; time < shiftRange.end; time += 30) { let count = 0; const intervalStart = time; const intervalEnd = time + 30; employees.forEach(emp => { if (emp.timeInMins === -1 || emp.timeOutMins === -1) return; if (emp.timeInMins < intervalEnd && emp.timeOutMins > intervalStart) count++; }); scheduledCounts[minutesToTime(time)] = count; } return scheduledCounts; }
+
+        function calculateBreaksInIntervalCounts(employees, shiftType) { const shiftRange = APP_CONFIG.SHIFT_TIME_RANGES[shiftType]; const breaksInIntervalCounts = {}; for (let time = shiftRange.start; time < shiftRange.end; time += 30) { let breakCount = 0; const intervalStart = time; const intervalEnd = time + 30; const intervalTimeStr = minutesToTime(time); employees.forEach(emp => { if (emp.breakTime && emp.breakTime !== APP_CONFIG.STRINGS.NO_BREAK_NEEDED && emp.breakTime !== APP_CONFIG.STRINGS.BREAK_CONFLICT_MESSAGE) { const parts = emp.breakTime.split(/\s*-\s*/); let breakStartStr = '', breakEndStr = ''; if (parts.length === 2) { breakStartStr = parts[0].trim(); breakEndStr = parts[1].trim(); } else { return; } const breakStartMins = timeToMinutes(breakStartStr); const breakEndMins = timeToMinutes(breakEndStr); if (breakStartMins !== -1 && breakEndMins !== -1) { const overlaps = (breakStartMins < intervalEnd && breakEndMins > intervalStart); if (overlaps) breakCount++; } } }); breaksInIntervalCounts[intervalTimeStr] = breakCount; } return breaksInIntervalCounts; }
+
+        function calculateArrivalDepartureLog(employees, shiftType) { const logEntries = []; const shiftRange = APP_CONFIG.SHIFT_TIME_RANGES[shiftType]; for (let currentTimeMins = shiftRange.start; currentTimeMins <= shiftRange.end; currentTimeMins += 15) { const arrivalsAtThisTime = employees.filter(emp => emp.timeInMins === currentTimeMins).map(emp => emp.name); const departuresAtThisTime = employees.filter(emp => emp.timeOutMins === currentTimeMins).map(emp => emp.name); if (arrivalsAtThisTime.length > 0 || departuresAtThisTime.length > 0) { logEntries.push({ time: minutesToTime(currentTimeMins), arrivals: arrivalsAtThisTime, departures: departuresAtThisTime }); } } return logEntries; }
+
+
+
+        function renderPlan(lineupData, employees, shiftType, scheduledCounts, breaksInIntervalData, arrivalDepartureLog, dynamicLineupHeaders, closingTasks = []) {
+
+            const planOutputDiv = document.getElementById('planOutput'); planOutputDiv.innerHTML = '';   
+
+            const lineupTableContainer = document.createElement('div'); lineupTableContainer.className = 'output-table-container'; const lineupTable = document.createElement('table'); lineupTable.id = "lineupOutputTable"; lineupTable.className = 'output-table'; const lineupThead = lineupTable.createTHead(); const lineupHeaderRow = lineupThead.insertRow(); const finalTableHeaders = ['Lineup']; if (shiftType === 'day') { finalTableHeaders.push('AM Build-To'); } finalTableHeaders.push(...dynamicLineupHeaders); if (shiftType === 'night') { finalTableHeaders.push('PM Build-To'); } finalTableHeaders.forEach(headerText => { lineupHeaderRow.appendChild(document.createElement('th')).textContent = headerText; }); const lineupTbody = lineupTable.createTBody(); lineupData.forEach(entry => { const hasAssignedStaff = dynamicLineupHeaders.some(header => entry[header] && entry[header].trim() !== ''); if ((shiftType === 'day' && entry.amBuildTo) || (shiftType === 'night' && entry.pmBuildTo) || hasAssignedStaff) { const row = lineupTbody.insertRow(); row.insertCell().textContent = entry.id; if (shiftType === 'day') { row.insertCell().textContent = entry.amBuildTo; } dynamicLineupHeaders.forEach(header => { const cell = row.insertCell(); const employeeName = entry[header] || ''; cell.textContent = employeeName; if (employeeName) { cell.draggable = true; cell.classList.add('draggable-employee'); cell.dataset.employee = employeeName; cell.dataset.position = entry.id; cell.dataset.peak = header; } else { cell.classList.add('drop-zone'); } }); if (shiftType === 'night') { row.insertCell().textContent = entry.pmBuildTo; } } }); 
+
+            // Add drag and drop event listeners
+            setupDragAndDrop(lineupTable, lineupData, dynamicLineupHeaders, shiftType);
+
+            planOutputDiv.appendChild(document.createElement('h2')).textContent='Lineup'; planOutputDiv.appendChild(lineupTableContainer).appendChild(lineupTable); planOutputDiv.appendChild(document.createElement('br')); planOutputDiv.appendChild(document.createElement('br'));
+
+            // Add closing tasks section for night shift right after lineup
+            if (shiftType === 'night' && closingTasks.length > 0) {
+                const closingTasksTableContainer = document.createElement('div');
+                closingTasksTableContainer.className = 'output-table-container';
+                const closingTasksTable = document.createElement('table');
+                closingTasksTable.id = "closingTasksTable";
+                closingTasksTable.className = 'output-table';
+
+                const closingTasksThead = closingTasksTable.createTHead();
+                const closingTasksHeaderRow = closingTasksThead.insertRow();
+                closingTasksHeaderRow.appendChild(document.createElement('th')).textContent = 'Task';
+                closingTasksHeaderRow.appendChild(document.createElement('th')).textContent = 'Assigned Employee';
+
+                const closingTasksTbody = closingTasksTable.createTBody();
+                closingTasks.forEach((task, index) => {
+                    const row = closingTasksTbody.insertRow();
+                    row.insertCell().textContent = task.task;
+                    const employeeCell = row.insertCell();
+                    employeeCell.textContent = task.employee;
+                    if (task.employee && task.employee !== 'Not assigned') {
+                        employeeCell.draggable = true;
+                        employeeCell.classList.add('draggable-employee');
+                        employeeCell.dataset.employee = task.employee;
+                        employeeCell.dataset.taskIndex = index;
+                    } else {
+                        employeeCell.classList.add('drop-zone');
+                    }
+                });
+
+                // Add drag and drop event listeners for closing tasks
+                setupClosingTasksDragAndDrop(closingTasksTable, closingTasks);
+
+                planOutputDiv.appendChild(document.createElement('h2')).textContent = 'Closing Tasks (10:30 PM)';
+                planOutputDiv.appendChild(closingTasksTableContainer).appendChild(closingTasksTable);
+                planOutputDiv.appendChild(document.createElement('br'));
+                planOutputDiv.appendChild(document.createElement('br'));
+            }
+
+            const rosterTableContainer=document.createElement('div');rosterTableContainer.className='output-table-container'; const rosterTable=document.createElement('table');rosterTable.id="rosterOutputTable";rosterTable.className='output-table'; const rosterThead=rosterTable.createTHead();const rosterHeaderRow=rosterThead.insertRow(); ['Team Member','Time IN','Time OUT','Break','Notes'].forEach(hT=>{rosterHeaderRow.appendChild(document.createElement('th')).textContent=hT;}); const rosterTbody=rosterTable.createTBody(); employees.forEach(e=>{const r=rosterTbody.insertRow();r.insertCell().textContent=e.name;r.insertCell().textContent=e.timeIn;r.insertCell().textContent=e.timeOut;r.insertCell().textContent=e.breakTime;r.insertCell().textContent=e.notes;}); planOutputDiv.appendChild(document.createElement('h2')).textContent='Roster';planOutputDiv.appendChild(rosterTableContainer).appendChild(rosterTable); planOutputDiv.appendChild(document.createElement('br'));planOutputDiv.appendChild(document.createElement('br'));
+
+            const staffingTableContainer = document.createElement('div'); staffingTableContainer.className = 'output-table-container'; const staffingTable = document.createElement('table'); staffingTable.id = "staffingOutputTable"; staffingTable.className = 'output-table'; const staffingThead = staffingTable.createTHead(); const staffingHeaderRow = staffingThead.insertRow(); staffingHeaderRow.appendChild(document.createElement('th')).textContent = 'Time'; staffingHeaderRow.appendChild(document.createElement('th')).textContent = 'Total Scheduled'; staffingHeaderRow.appendChild(document.createElement('th')).textContent = 'Predicted Breaks During Interval'; const staffingTbody = staffingTable.createTBody(); if (scheduledCounts && Object.keys(scheduledCounts).length > 0) { for (const time in scheduledCounts) { if (scheduledCounts.hasOwnProperty(time)) { const row = staffingTbody.insertRow(); row.insertCell().textContent = time; row.insertCell().textContent = scheduledCounts[time]; row.insertCell().textContent = breaksInIntervalData[time] !== undefined ? breaksInIntervalData[time] : 0; } } } else { const row = staffingTbody.insertRow(); const cell = row.insertCell(); cell.colSpan = 3; cell.textContent = "No staffing data to display for this shift range."; cell.style.textAlign = "center"; } planOutputDiv.appendChild(document.createElement('h2')).textContent = `Staffing Levels Per Half Hour (${shiftType.charAt(0).toUpperCase() + shiftType.slice(1)} Shift)`; planOutputDiv.appendChild(staffingTableContainer).appendChild(staffingTable);
+
+            planOutputDiv.appendChild(document.createElement('br')); planOutputDiv.appendChild(document.createElement('br'));
+
+            const adTableContainer = document.createElement('div'); adTableContainer.className = 'output-table-container'; const adTable = document.createElement('table'); adTable.id = "arrivalDepartureTable"; adTable.className = 'output-table'; const adThead = adTable.createTHead(); const adHeaderRow = adThead.insertRow(); adHeaderRow.appendChild(document.createElement('th')).textContent = 'Time'; adHeaderRow.appendChild(document.createElement('th')).textContent = 'Arrivals (+)'; adHeaderRow.appendChild(document.createElement('th')).textContent = 'Departures (-)'; const adTbody = adTable.createTBody(); if (arrivalDepartureLog && arrivalDepartureLog.length > 0) { arrivalDepartureLog.forEach(entry => { const row = adTbody.insertRow(); row.insertCell().textContent = entry.time; const arrivalsCell = row.insertCell(); const arrivalsSpan = document.createElement('span'); arrivalsSpan.className = 'arrivals-text'; arrivalsSpan.textContent = entry.arrivals.join(', '); arrivalsCell.appendChild(arrivalsSpan); const departuresCell = row.insertCell(); const departuresSpan = document.createElement('span'); departuresSpan.className = 'departures-text'; departuresSpan.textContent = entry.departures.join(', '); departuresCell.appendChild(departuresSpan); }); } else { const row = adTbody.insertRow(); const cell = row.insertCell(); cell.colSpan = 3; cell.textContent = `No arrivals or departures within the ${shiftType === 'day' ? '5AM-2PM' : '2PM-11PM'} range.`; cell.style.textAlign = "center"; } planOutputDiv.appendChild(document.createElement('h2')).textContent = `Employee Arrivals & Departures (${shiftType.charAt(0).toUpperCase() + shiftType.slice(1)} Shift)`; planOutputDiv.appendChild(adTableContainer).appendChild(adTable);
+
+        };
+
+
+
+        function showMessage(msg,type){const mb=document.getElementById('messageBox');mb.textContent=msg;mb.style.display='block';mb.style.backgroundColor=type==='success'?'#d4edda':'#f8d7da';mb.style.color=type==='success'?'#155724':'#721c24';};
+
+        function copyPlanToClipboard(){if(!document.getElementById('planOutput').innerHTML){showMessage(APP_CONFIG.STRINGS.MSG_NO_PLAN_TO_COPY,'error');return}let ttc='';const ttp=(te,t)=>{if(!te)return '';let txt=t?t+':\n':'';Array.from(te.querySelectorAll('th')).forEach((th,i,a)=>txt+=th.textContent+(i===a.length-1?'\n':'\t'));te.querySelectorAll('tbody tr').forEach(r=>{Array.from(r.querySelectorAll('td')).forEach((td,i,a)=>txt+=td.textContent+(i===a.length-1?'\n':'\t'));});return txt};ttc+=ttp(document.getElementById('lineupOutputTable'),'Lineup')+'\n';ttc+=ttp(document.getElementById('rosterOutputTable'),'Roster')+'\n';const st=document.querySelector('input[name="shiftType"]:checked').value;const staffT=document.getElementById('staffingOutputTable');if(staffT){const title=`Staffing Levels Per Half Hour (${st.charAt(0).toUpperCase()+st.slice(1)} Shift)`;ttc+=ttp(staffT,title)+'\n';}const adTable=document.getElementById('arrivalDepartureTable');if(adTable){const title=`Employee Arrivals & Departures (${st.charAt(0).toUpperCase()+st.slice(1)} Shift)`;ttc+=ttp(adTable,title)+'\n';}const closingTasksTable=document.getElementById('closingTasksTable');if(closingTasksTable){ttc+=ttp(closingTasksTable,'Closing Tasks (10:30 PM)');}const tmpC=document.getElementById('tempClipboard');tmpC.value=ttc;tmpC.select();try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ttc).then(()=>{showMessage(APP_CONFIG.STRINGS.MSG_PLAN_COPIED,'success')}).catch(e=>{document.execCommand('copy');showMessage(APP_CONFIG.STRINGS.MSG_PLAN_COPIED_FALLBACK,'success')})}else{document.execCommand('copy');showMessage(APP_CONFIG.STRINGS.MSG_PLAN_COPIED,'success')}}catch(e){showMessage(APP_CONFIG.STRINGS.MSG_FAILED_TO_COPY,'error')}};
+
+        function handleRawDataInput(){const rd=document.getElementById('rawDataInput').value;const emps=rd.trim().length>0?parseRawData(rd):[];populateEmployeeDropdowns(emps);if(emps.length===0){document.getElementById('planOutput').innerHTML='';document.getElementById('messageBox').style.display='none';document.getElementById('debugOutput').style.display='none';}};
+
+        function printPlan(){if(!document.getElementById('planOutput').innerHTML){showMessage(APP_CONFIG.STRINGS.MSG_NO_PLAN_TO_PRINT,'error');return}window.print()};
+
+
+        function planShift() {
+
+            try {
+
+                // console.clear(); 
+
+                const shiftTypeRadio = document.querySelector('input[name="shiftType"]:checked');
+
+                if (!shiftTypeRadio) {
+
+                    showMessage("Error: No shift type selected. Please select Day or Night shift.", "error");
+
+                    return; 
+
+                }
+
+                const selectedShiftType = shiftTypeRadio.value;
+
+
+                const rawData = document.getElementById('rawDataInput').value;
+
+                if (rawData.trim() === "") {
+
+                    showMessage("Please paste scheduling data.", "error");
+
+                    return;
+
+                }
+
+                let employees = parseRawData(rawData);
+
+
+
+                let actualShiftPeaks = [];
+
+                if (selectedShiftType === 'day') {
+
+                    const schoolSessionYesRadio = document.getElementById('schoolSessionYes');
+
+                    const schoolIsInSession = schoolSessionYesRadio ? schoolSessionYesRadio.checked : true; 
+
+                    if (schoolIsInSession) {
+
+                        const breakfastPeak = APP_CONFIG.PEAK_HOURS.day.find(p => p.colHeader === 'Breakfast');
+
+                        const lunchPeak = APP_CONFIG.PEAK_HOURS.day.find(p => p.colHeader === 'Lunch (12-1p)'); // Use updated colHeader
+
+                        if (breakfastPeak) actualShiftPeaks.push(breakfastPeak);
+
+                        if (lunchPeak) actualShiftPeaks.push(lunchPeak);
+
+                    } else {
+
+                        actualShiftPeaks.push(APP_CONFIG.DAY_SHIFT_MID_MORNING_PEAK_SCHOOL_OUT);
+
+                        const lunchPeak = APP_CONFIG.PEAK_HOURS.day.find(p => p.colHeader === 'Lunch (12-1p)'); // Use updated colHeader
+
+                        if (lunchPeak) actualShiftPeaks.push(lunchPeak);
+
+                    }
+
+                } else { 
+
+                    actualShiftPeaks = [...APP_CONFIG.PEAK_HOURS.night];
+
+                }
+
+                actualShiftPeaks = actualShiftPeaks.filter(p => p).sort((a, b) => a.start - b.start);
+
+
+                if (!actualShiftPeaks || actualShiftPeaks.length === 0) {
+
+                    showMessage(`Error: No relevant peak hours defined for the current selection.`, "error");
+
+                    return;
+
+                }
+
+
+                employees.sort((a, b) => a.timeInMins - b.timeInMins);
+
+
+                let effectiveBreakRestrictionHours = [...APP_CONFIG.UNIVERSAL_BREAK_RESTRICTIONS];
+
+                if (selectedShiftType === 'day') {
+
+                    const schoolSessionYesRadio = document.getElementById('schoolSessionYes');
+
+                    if (!schoolSessionYesRadio) {
+
+                         showMessage("Error: School session input element not found.", "error");
+
+                         return;
+
+                    }
+
+                    const schoolIsInSession = schoolSessionYesRadio.checked;
+
+                    if (schoolIsInSession) {
+
+                        effectiveBreakRestrictionHours.push(APP_CONFIG.DAY_SHIFT_BREAKFAST_RESTRICTIONS.schoolInSession);
+
+                    } else {
+
+                        effectiveBreakRestrictionHours.push(APP_CONFIG.DAY_SHIFT_BREAKFAST_RESTRICTIONS.schoolNotInSession);
+
+                    }
+
+                }
+
+                effectiveBreakRestrictionHours.sort((a,b) => a.start - b.start);
+
+
+                const globalBreakCounts = {}; 
+
+                for (let m = 0; m < 1440; m += 15) globalBreakCounts[m] = 0;
+
+
+
+                employees.forEach(emp => { 
+
+                    emp.breakTime = calculateBreak(emp.timeInMins, emp.timeOutMins, globalBreakCounts, effectiveBreakRestrictionHours); 
+
+                });
+
+                detectConcurrentBreaksAfterAssignment(employees, globalBreakCounts); 
+
+
+
+                const lineupData = APP_CONFIG.LINEUP_POSITIONS_DETAILS.map(pos=>{const lineupEntry={id:pos.id,amBuildTo:pos.amBuildTo,pmBuildTo:pos.pmBuildTo};actualShiftPeaks.forEach(peak=>lineupEntry[peak.colHeader]='');return lineupEntry});
+
+                const slN=document.getElementById('shiftLeaderSelect').value;let allSLoSL=[];if(slN){allSLoSL=employees.filter(e=>e.name===slN);if(allSLoSL.length>0){if(allSLoSL[0].timeInMins===-1||allSLoSL[0].timeOutMins===-1){showMessage(APP_CONFIG.STRINGS.MSG_SL_TIMES_UNPARSEABLE_PREFIX+allSLoSL[0].name+APP_CONFIG.STRINGS.MSG_SL_TIMES_UNPARSEABLE_SUFFIX,'error');allSLoSL=[]}}else{showMessage(APP_CONFIG.STRINGS.MSG_SHIFT_LEADER_NOT_FOUND_PREFIX+slN+APP_CONFIG.STRINGS.MSG_SHIFT_LEADER_NOT_FOUND_SUFFIX,'error')}}const cpN=document.getElementById('checklistPersonSelect').value;let cpI=null;if(selectedShiftType==='night'&&cpN){cpI=employees.find(e=>e.name===cpN);if(!cpI){showMessage(APP_CONFIG.STRINGS.MSG_CHECKLIST_PERSON_NOT_FOUND_PREFIX+cpN+APP_CONFIG.STRINGS.MSG_CHECKLIST_PERSON_NOT_FOUND_SUFFIX,'error')}else{if(cpI)cpI.notes=(cpI.notes?cpI.notes+'; ':'')+APP_CONFIG.STRINGS.MSG_ASSIGNED_CHECKLIST_PERSON}}const slLID=APP_CONFIG.SHIFT_LEAD_LINEUP_IDS[selectedShiftType];const slLET=APP_CONFIG.LINEUP_POSITIONS_DETAILS.find(e=>e.id===slLID);
+
+
+
+                actualShiftPeaks.forEach(p=>{
+
+                    // console.log(`--- Processing Peak: ${p.colHeader} (${minutesToTime(p.start)} - ${minutesToTime(p.end)}) ---`);
+
+                    let avFP=employees.filter(e=>{const wDP=e.timeInMins<=p.start&&e.timeOutMins>=p.end;if(!wDP)return false;if(e.breakTime&&![APP_CONFIG.STRINGS.NO_BREAK_NEEDED,APP_CONFIG.STRINGS.BREAK_CONFLICT_MESSAGE].includes(e.breakTime)){const [bsS,beS]=e.breakTime.split(' - ');const bsM=timeToMinutes(bsS);const beM=timeToMinutes(beS);if(bsM===-1||beM===-1)return true;if(bsM<p.end&&beM>p.start)return false}return true});
+
+                    let eFGA=[...avFP];
+
+                    // console.log(`  1. Peak: ${p.colHeader}. Employees initially available for peak (scheduled for full peak duration & not on break): ${avFP.length}`);
+
+
+                    if(slN&&allSLoSL.length>0&&slLET){let aSLTDR=false;for(const slS of allSLoSL){if(slS.timeInMins===-1||slS.timeOutMins===-1){continue}const iSLWDP=slS.timeInMins<p.end&&slS.timeOutMins>p.start;if(iSLWDP){aSLTDR=true;break;}} if(aSLTDR){const acLE=lineupData.find(e=>e.id===slLID);if(acLE){acLE[p.colHeader]=slN;eFGA=eFGA.filter(e=>e.name!==slN); /* console.log(`  2. Peak: ${p.colHeader}. Shift Leader (${slN}) assigned. Pool for general assignment: ${eFGA.length}`); */ }}}
+
+                    // Check if shift leader is already assigned to shift lead position in a previous peak
+                    // and ensure they stay in that position for all peaks where they're available
+                    if(slN&&allSLoSL.length>0&&slLET){
+                        const acLE=lineupData.find(e=>e.id===slLID);
+                        if(acLE){
+                            // Check if shift leader was assigned to this position in any previous peak
+                            const alreadyAssignedToPrevPeak = actualShiftPeaks.some(prevPeak => {
+                                const prevPeakIndex = actualShiftPeaks.findIndex(pp => pp.colHeader === prevPeak.colHeader);
+                                const currentPeakIndex = actualShiftPeaks.findIndex(cp => cp.colHeader === p.colHeader);
+                                return prevPeakIndex < currentPeakIndex && acLE[prevPeak.colHeader] === slN;
+                            });
+
+                            // If they were assigned before and are available for this peak, keep them assigned
+                            if(alreadyAssignedToPrevPeak && !acLE[p.colHeader]){
+                                const slAvailableForThisPeak = allSLoSL.some(slS => {
+                                    if(slS.timeInMins === -1 || slS.timeOutMins === -1) return false;
+                                    return slS.timeInMins < p.end && slS.timeOutMins > p.start;
+                                });
+
+                                if(slAvailableForThisPeak){
+                                    acLE[p.colHeader] = slN;
+                                    eFGA = eFGA.filter(e => e.name !== slN);
+                                }
+                            }
+                        }
+                    }
+
+                    if(selectedShiftType==='night'&&p.colHeader==='9-10pm'&&cpI){const cpSch=cpI.timeInMins<p.end&&cpI.timeOutMins>p.start;let slIsCpAARThisPeak=false;if(slN&&slN===cpI.name){const slLE=lineupData.find(e=>e.id===slLID);if(slLE&&slLE[p.colHeader]===slN)slIsCpAARThisPeak=true}if(cpSch&&!slIsCpAARThisPeak&&eFGA.some(e=>e.name===cpI.name)){eFGA=eFGA.filter(e=>e.name!==cpI.name); /* console.log(`  3. Peak: ${p.colHeader}. Checklist Person (${cpI.name}) removed. Pool for general assignment: ${eFGA.length}`); */}}
+
+
+
+                    // console.log(`  4. Peak: ${p.colHeader}. Employees available for general assignment: ${eFGA.length}`);
+
+                    let assignedInLoopCount = 0;
+
+                    const tempGeneralPool = [...eFGA]; 
+
+
+                    for(let i=tempGeneralPool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[tempGeneralPool[i],tempGeneralPool[j]]=[tempGeneralPool[j],tempGeneralPool[i]]}
+
+
+for(const det of APP_CONFIG.LINEUP_POSITIONS_DETAILS) {
+    if (tempGeneralPool.length === 0) break;
+
+    const cPN = selectedShiftType === 'day' ? det.amBuildTo : det.pmBuildTo;
+    const lE = lineupData.find(e => e.id === det.id);
+
+    if (lE && cPN && cPN.trim() !== '') {
+        if (lE[p.colHeader] === '') {
+            const skilledMatchIndex = tempGeneralPool.findIndex(emp => 
+                EMPLOYEE_SKILLS[emp.name]?.includes(cPN)
+            );
+            if (skilledMatchIndex !== -1) {
+                const skilledEmployee = tempGeneralPool.splice(skilledMatchIndex, 1)[0];
+                lE[p.colHeader] = skilledEmployee.name;
+                assignedInLoopCount++;
+            }
+        }
+    }
+}
+
+
+                    // console.log(`  5. Peak: ${p.colHeader}. Assigned ${assignedInLoopCount} employees in general loop.`);
+
+                    // if (tempGeneralPool.length > 0) {
+
+                    //    console.warn(`  WARNING: ${tempGeneralPool.length} employees left over after general assignment for peak ${p.colHeader}:`, tempGeneralPool.map(e=>e.name));
+
+                    // }
+
+                });
+
+
+
+                const scheduledCounts = calculateScheduledCounts(employees,selectedShiftType);
+
+                const breaksInIntervalData = calculateBreaksInIntervalCounts(employees,selectedShiftType);
+
+                const arrivalDepartureLogData = calculateArrivalDepartureLog(employees, selectedShiftType);
+
+                const dynamicPeakColumnHeaders = actualShiftPeaks.map(p => p.colHeader);
+
+
+                // Assign closing tasks for night shift
+                let closingTasks = [];
+                if (selectedShiftType === 'night') {
+                    const closingTasksList = ['Floors Lead', 'Floors 1', 'Floors 2', 'Bathroom', 'Polishing', 'Icedream'];
+
+                    // Get employees who get off at 10:30 PM
+                    const employeesOffAt1030 = employees.filter(emp => emp.timeOutMins === timeToMinutes("10:30PM"));
+
+                    // Exclude employees already assigned to Shift Leader or Checklist
+                    const availableForClosing = employeesOffAt1030.filter(emp => {
+                        // Check if employee is assigned as shift leader
+                        const isShiftLeader = emp.name === slN;
+
+                        // Check if employee is assigned as checklist person
+                        const isChecklistPerson = emp.name === cpN;
+
+                        return !isShiftLeader && !isChecklistPerson;
+                    });
+
+                    // Randomly assign closing tasks
+                    const shuffledEmployees = [...availableForClosing];
+                    for (let i = shuffledEmployees.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [shuffledEmployees[i], shuffledEmployees[j]] = [shuffledEmployees[j], shuffledEmployees[i]];
+                    }
+
+                    closingTasksList.forEach((task, index) => {
+                        const assignedEmployee = shuffledEmployees[index % shuffledEmployees.length];
+                        closingTasks.push({
+                            task: task,
+                            employee: assignedEmployee ? assignedEmployee.name : 'Not assigned'
+                        });
+                    });
+                }
+
+                renderPlan(lineupData,employees,selectedShiftType,scheduledCounts,breaksInIntervalData, arrivalDepartureLogData, dynamicPeakColumnHeaders, closingTasks);
+
+
+
+                document.getElementById('copyButton').style.display='flex';document.getElementById('printButton').style.display='flex';showMessage(APP_CONFIG.STRINGS.MSG_SHIFT_PLANNED_SUCCESS,'success')
+
+            } catch (error) {
+
+                console.error("Error during planShift execution:", error);
+
+                showMessage(`An error occurred: ${error.message}. Please check console (F12) if possible, or report the error.`, "error");
+
+            }
+
+        };
+
+
+        // Dark mode functionality
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeToggleIcon(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeToggleIcon(newTheme);
+        }
+
+        function updateThemeToggleIcon(theme) {
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) {
+                themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+                themeToggle.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+            }
+        }
+
+        function setupDragAndDrop(table, lineupData, dynamicLineupHeaders, shiftType) {
+            let draggedElement = null;
+            let draggedData = null;
+
+            // Add drag start event to draggable employees
+            table.addEventListener('dragstart', function(e) {
+                if (e.target.classList.contains('draggable-employee')) {
+                    draggedElement = e.target;
+                    draggedData = {
+                        employee: e.target.dataset.employee || '',
+                        position: parseInt(e.target.dataset.position) || 0,
+                        peak: e.target.dataset.peak || ''
+                    };
+                    e.target.classList.add('dragging');
+                    if (e.dataTransfer) {
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', ''); // Required for some browsers
+                    }
+                }
+            });
+
+            // Add drag end event
+            table.addEventListener('dragend', function(e) {
+                if (e.target.classList.contains('draggable-employee')) {
+                    e.target.classList.remove('dragging');
+                }
+                // Clean up drag-over classes
+                table.querySelectorAll('.drag-over').forEach(c => c.classList.remove('drag-over'));
+            });
+
+            // Add drag over event to allow dropping
+            table.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                if (e.dataTransfer) {
+                    e.dataTransfer.dropEffect = 'move';
+                }
+
+                const cell = e.target.closest('td');
+                if (cell && (cell.classList.contains('drop-zone') || cell.classList.contains('draggable-employee'))) {
+                    // Remove drag-over class from all cells
+                    table.querySelectorAll('.drag-over').forEach(c => c.classList.remove('drag-over'));
+                    
+                    // Only add drag-over to cells that can accept drops
+                    const row = cell.closest('tr');
+                    if (row && row.parentNode.tagName === 'TBODY') {
+                        cell.classList.add('drag-over');
+                    }
+                }
+            });
+
+            // Add drag leave event
+            table.addEventListener('dragleave', function(e) {
+                const cell = e.target.closest('td');
+                if (cell && !cell.contains(e.relatedTarget)) {
+                    cell.classList.remove('drag-over');
+                }
+            });
+
+            // Add drop event
+            table.addEventListener('drop', function(e) {
+                e.preventDefault();
+                const targetCell = e.target.closest('td');
+
+                if (targetCell && draggedElement && draggedData) {
+                    // Remove drag-over class
+                    table.querySelectorAll('.drag-over').forEach(c => c.classList.remove('drag-over'));
+
+                    // Get target position and peak info
+                    const targetRow = targetCell.closest('tr');
+                    const targetRowIndex = Array.from(targetRow.parentNode.children).indexOf(targetRow);
+                    const targetCellIndex = Array.from(targetRow.children).indexOf(targetCell);
+
+                    // Calculate which peak column this is
+                    let peakIndex = targetCellIndex - 1; // Subtract 1 for lineup ID column
+                    if (shiftType === 'day') {
+                        peakIndex -= 1; // Subtract 1 more for AM Build-To column
+                    }
+
+                    // Ensure we're dropping in a valid peak column
+                    if (peakIndex >= 0 && peakIndex < dynamicLineupHeaders.length) {
+                        const targetPeak = dynamicLineupHeaders[peakIndex];
+                        const targetLineupEntry = lineupData[targetRowIndex];
+                        const targetPositionId = targetLineupEntry.id;
+
+                        // Find source entry
+                        const sourceEntry = lineupData.find(entry => entry.id === draggedData.position);
+
+                        if (sourceEntry && targetLineupEntry && sourceEntry !== targetLineupEntry) {
+                            // Store current values
+                            const sourceEmployee = draggedData.employee;
+                            const targetEmployee = targetLineupEntry[targetPeak] || '';
+
+                            // Update the data model
+                            sourceEntry[draggedData.peak] = targetEmployee;
+                            targetLineupEntry[targetPeak] = sourceEmployee;
+
+                            // Update the source cell display
+                            if (targetEmployee) {
+                                draggedElement.textContent = targetEmployee;
+                                draggedElement.dataset.employee = targetEmployee;
+                                draggedElement.classList.add('draggable-employee');
+                                draggedElement.classList.remove('drop-zone');
+                                draggedElement.draggable = true;
+                            } else {
+                                draggedElement.textContent = '';
+                                draggedElement.removeAttribute('data-employee');
+                                draggedElement.classList.remove('draggable-employee');
+                                draggedElement.classList.add('drop-zone');
+                                draggedElement.draggable = false;
+                            }
+
+                            // Update the target cell display
+                            targetCell.textContent = sourceEmployee;
+                            targetCell.dataset.employee = sourceEmployee;
+                            targetCell.dataset.position = targetPositionId;
+                            targetCell.dataset.peak = targetPeak;
+                            targetCell.classList.add('draggable-employee');
+                            targetCell.classList.remove('drop-zone');
+                            targetCell.draggable = true;
+                        } else if (sourceEntry && targetLineupEntry && sourceEntry === targetLineupEntry) {
+                            // Same row, different peak - move within the same position
+                            const sourceEmployee = draggedData.employee;
+                            const targetEmployee = targetLineupEntry[targetPeak] || '';
+
+                            // Update the data model
+                            sourceEntry[draggedData.peak] = targetEmployee;
+                            targetLineupEntry[targetPeak] = sourceEmployee;
+
+                            // Update the source cell display
+                            if (targetEmployee) {
+                                draggedElement.textContent = targetEmployee;
+                                draggedElement.dataset.employee = targetEmployee;
+                                draggedElement.dataset.peak = draggedData.peak;
+                                draggedElement.classList.add('draggable-employee');
+                                draggedElement.classList.remove('drop-zone');
+                                draggedElement.draggable = true;
+                            } else {
+                                draggedElement.textContent = '';
+                                draggedElement.removeAttribute('data-employee');
+                                draggedElement.classList.remove('draggable-employee');
+                                draggedElement.classList.add('drop-zone');
+                                draggedElement.draggable = false;
+                            }
+
+                            // Update the target cell display
+                            targetCell.textContent = sourceEmployee;
+                            targetCell.dataset.employee = sourceEmployee;
+                            targetCell.dataset.position = targetPositionId;
+                            targetCell.dataset.peak = targetPeak;
+                            targetCell.classList.add('draggable-employee');
+                            targetCell.classList.remove('drop-zone');
+                            targetCell.draggable = true;
+                        }
+                    }
+                }
+
+                // Reset drag state
+                draggedElement = null;
+                draggedData = null;
+            });
+        }
+
+        function setupClosingTasksDragAndDrop(table, closingTasks) {
+            let draggedElement = null;
+            let draggedData = null;
+
+            // Add drag start event to draggable employees
+            table.addEventListener('dragstart', function(e) {
+                if (e.target.classList.contains('draggable-employee')) {
+                    draggedElement = e.target;
+                    draggedData = {
+                        employee: e.target.dataset.employee,
+                        taskIndex: parseInt(e.target.dataset.taskIndex)
+                    };
+                    e.target.classList.add('dragging');
+                    if (e.dataTransfer) {
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', ''); // Required for some browsers
+                    }
+                }
+            });
+
+            // Add drag end event
+            table.addEventListener('dragend', function(e) {
+                if (e.target.classList.contains('draggable-employee')) {
+                    e.target.classList.remove('dragging');
+                }
+                // Clean up drag-over classes
+                table.querySelectorAll('.drag-over').forEach(c => c.classList.remove('drag-over'));
+            });
+
+            // Add drag over event to allow dropping
+            table.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                if (e.dataTransfer) {
+                    e.dataTransfer.dropEffect = 'move';
+                }
+
+                const cell = e.target.closest('td');
+                if (cell && cell.cellIndex === 1 && (cell.classList.contains('drop-zone') || cell.classList.contains('draggable-employee'))) {
+                    // Remove drag-over class from all cells
+                    table.querySelectorAll('.drag-over').forEach(c => c.classList.remove('drag-over'));
+                    cell.classList.add('drag-over');
+                }
+            });
+
+            // Add drag leave event
+            table.addEventListener('dragleave', function(e) {
+                const cell = e.target.closest('td');
+                if (cell && !cell.contains(e.relatedTarget)) {
+                    cell.classList.remove('drag-over');
+                }
+            });
+
+            // Add drop event
+            table.addEventListener('drop', function(e) {
+                e.preventDefault();
+                const targetCell = e.target.closest('td');
+
+                if (targetCell && targetCell.cellIndex === 1 && draggedElement && draggedData) {
+                    // Remove drag-over class
+                    table.querySelectorAll('.drag-over').forEach(c => c.classList.remove('drag-over'));
+
+                    // Get target task index
+                    const targetRow = targetCell.closest('tr');
+                    const targetRowIndex = Array.from(targetRow.parentNode.children).indexOf(targetRow);
+
+                    // Update the data
+                    const sourceTaskIndex = draggedData.taskIndex;
+                    const targetTaskIndex = targetRowIndex;
+
+                    if (sourceTaskIndex !== targetTaskIndex && sourceTaskIndex >= 0 && targetTaskIndex >= 0) {
+                        // Store current values
+                        const sourceEmployee = draggedData.employee;
+                        const targetEmployee = closingTasks[targetTaskIndex].employee;
+
+                        // Swap the employees in the closing tasks data
+                        closingTasks[targetTaskIndex].employee = sourceEmployee;
+                        closingTasks[sourceTaskIndex].employee = targetEmployee;
+
+                        // Update the source cell display
+                        if (targetEmployee && targetEmployee !== 'Not assigned') {
+                            draggedElement.textContent = targetEmployee;
+                            draggedElement.dataset.employee = targetEmployee;
+                            draggedElement.classList.add('draggable-employee');
+                            draggedElement.classList.remove('drop-zone');
+                            draggedElement.draggable = true;
+                        } else {
+                            draggedElement.textContent = 'Not assigned';
+                            draggedElement.removeAttribute('data-employee');
+                            draggedElement.classList.remove('draggable-employee');
+                            draggedElement.classList.add('drop-zone');
+                            draggedElement.draggable = false;
+                        }
+
+                        // Update the target cell display
+                        targetCell.textContent = sourceEmployee;
+                        targetCell.dataset.employee = sourceEmployee;
+                        targetCell.dataset.taskIndex = targetTaskIndex;
+                        
+                        if (sourceEmployee && sourceEmployee !== 'Not assigned') {
+                            targetCell.classList.add('draggable-employee');
+                            targetCell.classList.remove('drop-zone');
+                            targetCell.draggable = true;
+                        } else {
+                            targetCell.classList.remove('draggable-employee');
+                            targetCell.classList.add('drop-zone');
+                            targetCell.draggable = false;
+                        }
+                    }
+                }
+
+                // Reset drag state
+                draggedElement = null;
+                draggedData = null;
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded',()=>{
+
+            initializeTheme();
+
+            updateShiftTypeSpecificUI();
+
+            document.querySelectorAll('.button-group button').forEach(b=>{if(!b.hasAttribute('type'))b.setAttribute('type','button')});
+
+            const dO=document.getElementById('debugOutput');if(dO)dO.style.display='none';
+
+            // Theme toggle event listener
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', toggleTheme);
+            }
+
+            const disclaimerPopup = document.getElementById('disclaimerPopup');
+
+            const closeDisclaimerBtn = document.getElementById('closeDisclaimerBtn');
+
+            if (disclaimerPopup && closeDisclaimerBtn) {
+
+                disclaimerPopup.style.display = 'block'; 
+
+                closeDisclaimerBtn.addEventListener('click', () => {
+
+                    disclaimerPopup.style.display = 'none';
+
+                });
+
+            }
+
+        });
+
+    </script>
+
+</body>
+
+</html>
